@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { AppComponent } from './app.component';
-import { NovoFormModule, NovoElementsModule, NovoModalService } from 'novo-elements';
+import { NovoFormModule, NovoElementsModule, NovoModalService, FieldInteractionApi, NovoToastService } from 'novo-elements';
 import { PokerSessionComponent } from './poker-session/poker-session.component';
 import { CreateSessionComponent } from './create-session/create-session.component';
 
@@ -24,7 +24,11 @@ const appRoutes: Routes = [
     NovoFormModule,
     RouterModule.forRoot( appRoutes, { enableTracing: false, useHash: false }),
   ],
-  providers: [NovoModalService],
+  providers: [
+    NovoModalService,
+    FieldInteractionApi,
+    NovoToastService
+  ],
   bootstrap: [AppComponent],
   entryComponents: [
     CreateSessionComponent

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-poker-session',
@@ -7,9 +8,11 @@ import { Component, OnInit } from '@angular/core';
 })
 export class PokerSessionComponent implements OnInit {
 
-  constructor() { }
+  public id: string;
+  constructor(private route: ActivatedRoute) { }
 
   ngOnInit() {
+    this.id = this.route.snapshot.paramMap.get('id');
   }
 
 }
