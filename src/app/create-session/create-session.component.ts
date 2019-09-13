@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NovoModalRef } from 'novo-elements';
+import { NovoModalRef, NovoFormGroup, TextBoxControl, FormUtils } from 'novo-elements';
 
 @Component({
   selector: 'app-create-session',
@@ -8,9 +8,13 @@ import { NovoModalRef } from 'novo-elements';
 })
 export class CreateSessionComponent implements OnInit {
 
-  constructor(public modalRef: NovoModalRef) { }
+  public form: NovoFormGroup;
+  public nameControl: TextBoxControl;
 
-  ngOnInit() {
+  constructor(public modalRef: NovoModalRef, public formUtils: FormUtils) { }
+
+  public ngOnInit() {
+    this.createForm();
   }
 
   public close(): void {
@@ -19,6 +23,15 @@ export class CreateSessionComponent implements OnInit {
 
   public save(): void {
     this.modalRef.close(undefined);
+  }
+
+  public createForm() {
+    this.nameControl = new TextBoxControl({
+      key: 'name',
+      required: true,
+      placeholder: 'Please Enter Name'
+    });
+    this.form = this.formUtils.toFormGroup([this.nameControl]);
   }
 
 }
