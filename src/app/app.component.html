@@ -1,3 +1,15 @@
+<header theme="light" [condensed]="true">
+  <utils>
+    <util-action icon="clipboard" tooltip="Copy Session Link"></util-action>
+    <util-action icon="tools" tooltip="Change settings"></util-action>
+  </utils>
+  <div class="entity-header" novo-title>
+    <span class="id">{{ 'name' }}</span>
+    <header-spacer></header-spacer>
+    <span class="name">{{ name }}</span>
+    <header-spacer></header-spacer>
+  </div>
+</header>
 <div *ngIf="name">
   <router-outlet></router-outlet>
 </div>

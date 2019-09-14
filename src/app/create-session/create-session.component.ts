@@ -22,7 +22,7 @@ export class CreateSessionComponent implements OnInit {
   }
 
   public save(): void {
-    this.modalRef.close(undefined);
+    this.modalRef.close(this.form.value.name);
   }
 
   public createForm() {

@@ -19,12 +19,15 @@ export class AppComponent implements OnInit {
   public ngOnInit(): void {
     this.name = sessionStorage.getItem(POKER_NAME);
     if (!this.name) {
-      this.modalService.open(CreateSessionComponent).onClosed.then(this.startNewSession.bind(this));
+      this.modalService.open(CreateSessionComponent).onClosed.then(this.startSession.bind(this));
     }
   }
 
-  private startNewSession(): void {
-    this.router.navigate([`/session/${this.generateSessionId(30)}`])
+  private startSession(name: string): void {
+    if (name) {
+      sessionStorage.setItem(POKER_NAME, name);
+      this.router.navigate([`/session/${this.generateSessionId(30)}`]);
+    }
   }
 
   private generateSessionId(length: number): string {
