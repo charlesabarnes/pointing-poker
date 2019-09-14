@@ -1,6 +1,6 @@
 <p>
 {{ id }}
 {{ name }}
-<li *ngFor="let userName of userNames"> {{userName}} - {{ pointvalues[userName] }}</li>
+  <li *ngFor="let userName of userNames"> {{userName}} - {{ pointValues[userName] }}</li>
 </p>
 <novo-tiles [options]="options" (onChange)="send($event)" [(ngModel)]="selectedPointValue"></novo-tiles>

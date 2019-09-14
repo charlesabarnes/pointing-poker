@@ -73,13 +73,12 @@ interface ExtWebSocket extends WebSocket {
 export class Message {
   constructor(
       public content: string,
-      public isBroadcast = false,
       public sender: string
   ) { }
 }
 
-function createMessage(content: string, isBroadcast = false, sender = 'NS'): string {
-  return JSON.stringify(new Message(content, isBroadcast, sender));
+function createMessage(content: string, sender = 'NS'): string {
+  return JSON.stringify(new Message(content, sender));
 }
 
 wss.on('connection', (ws: WebSocket) => {
@@ -98,19 +97,19 @@ wss.on('connection', (ws: WebSocket) => {
       const message = JSON.parse(msg) as Message;
 
       setTimeout(() => {
-          if (message.isBroadcast) {
+          if (false) {
 
               // send back the message to the other clients
               wss.clients
                   .forEach(client => {
                       if (client !== ws) {
-                          client.send(createMessage(message.content, true, message.sender));
+                          client.send(createMessage(message.content, message.sender));
                       }
                   });
 
           }
 
-          ws.send(createMessage(`You sent -> ${message.content}`, message.isBroadcast));
+          ws.send(createMessage(`You sent -> ${message.content}`));
 
       }, 1000);
 
