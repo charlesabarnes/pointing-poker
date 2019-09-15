@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { WebSocketSubject, webSocket } from 'rxjs/websocket';
+import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { NovoFormGroup, TextBoxControl, FormUtils } from 'novo-elements';
 export class Message {
   constructor(
