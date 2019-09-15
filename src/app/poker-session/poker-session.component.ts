@@ -70,7 +70,9 @@ export class PokerSessionComponent implements OnInit {
 
   get webSocket(): WebSocketSubject<any> {
     if (typeof this._webSocket ===  'undefined') {
-      this._webSocket = webSocket(`ws://${location.host.replace('4200', '4000')}/?session=${this.id}`);
+      this._webSocket = webSocket(
+        `${location.protocol === 'https' ? 'wss' : 'ws'}://${location.host.replace('4200', '4000')}/?session=${this.id}`
+        );
       this._webSocket.next(new Message(this.name, undefined, this.id));
     }
     return this._webSocket;
