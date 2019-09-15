@@ -15,9 +15,10 @@ import { PokerSessionComponent } from './poker-session/poker-session.component';
 import { CreateSessionComponent } from './create-session/create-session.component';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NoSessionComponent } from './no-session/no-session.component';
 
 const appRoutes: Routes = [
-  { path: '', component: PokerSessionComponent },
+  { path: '', component: NoSessionComponent },
   { path: 'session/:id', component: PokerSessionComponent },
 ];
 
@@ -25,17 +26,18 @@ const appRoutes: Routes = [
    declarations: [
       AppComponent,
       PokerSessionComponent,
-      CreateSessionComponent
+      CreateSessionComponent,
+      NoSessionComponent
    ],
    imports: [
-    BrowserModule.withServerTransition({ appId: 'serverApp' }),
-    NovoElementsModule,
-    NovoFormModule,
-    NovoTilesModule,
-    ReactiveFormsModule,
-    FormsModule,
-    BrowserAnimationsModule,
-    RouterModule.forRoot( appRoutes, { enableTracing: false, useHash: false }),
+      BrowserModule.withServerTransition({ appId: 'serverApp'}),
+      NovoElementsModule,
+      NovoFormModule,
+      NovoTilesModule,
+      ReactiveFormsModule,
+      FormsModule,
+      BrowserAnimationsModule,
+      RouterModule.forRoot( appRoutes, { enableTracing: false, useHash: false }),
   ],
   providers: [
     NovoModalService,

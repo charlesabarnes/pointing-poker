@@ -64,14 +64,16 @@ export class PokerSessionComponent implements OnInit {
   public ngOnInit() {
     this.id = this.route.snapshot.paramMap.get('id');
     this.name = sessionStorage.getItem('POKER_NAME');
-    this.webSocket.subscribe(this.handleSocketUpdates.bind(this));
-    this.createForm();
+    if (this.name) {
+      this.webSocket.subscribe(this.handleSocketUpdates.bind(this));
+      this.createForm();
+    }
   }
 
   get webSocket(): WebSocketSubject<any> {
     if (typeof this._webSocket ===  'undefined') {
       this._webSocket = webSocket(
-        `${location.protocol === 'https' ? 'wss' : 'ws'}://${location.host.replace('4200', '4000')}/?session=${this.id}`
+        `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host.replace('4200', '4000')}/?session=${this.id}`
         );
       this._webSocket.next(new Message(this.name, undefined, this.id));
     }
