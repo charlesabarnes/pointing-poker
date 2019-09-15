@@ -134,7 +134,12 @@ wss.on('connection', (ws: WebSocket, req: Request) => {
   });
 
   ws.on('error', (err) => {
-      console.warn(`Client disconnected - reason: ${err}`);
+    wss.clients
+      .forEach((client: any) => {
+        if (client.session === ws.session && ws !== client) {
+          client.send(createMessage('disconnect', ws.name));
+        }
+      });
   });
 });
 
@@ -146,7 +151,7 @@ setInterval(() => {
       if (!extWs.isAlive) {
         wss.clients
           .forEach((client: any) => {
-            if (client.session === ws.session) {
+            if (client.session === ws.session && ws !== client) {
               client.send(createMessage('disconnect', ws.name));
             }
           });

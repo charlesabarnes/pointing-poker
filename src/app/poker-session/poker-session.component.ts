@@ -57,6 +57,11 @@ export class PokerSessionComponent implements OnInit {
       label: '21',
       value: 21,
     },
+    {
+      label: '0',
+      value: 0,
+      disabled: true
+    },
   ];
 
   constructor(private route: ActivatedRoute, public formUtils: FormUtils) { }
@@ -109,6 +114,9 @@ export class PokerSessionComponent implements OnInit {
         delete this.pointValues[res.sender];
       } else {
         this.pointValues[res.sender] = res.content;
+        if (res.sender === this.name && res.content === undefined) {
+          this.selectedPointValue = 0;
+        }
       }
     }
   }
