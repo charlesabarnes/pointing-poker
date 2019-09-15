@@ -81,12 +81,19 @@ function createMessage(content: string, sender = 'NS'): string {
   return JSON.stringify(new Message(content, sender));
 }
 
-wss.on('connection', (ws: WebSocket) => {
+wss.on('connection', (ws: WebSocket, req: Request) => {
 
   const extWs = ws as ExtWebSocket;
+  ws.session = req.url.replace('/?session=', '');
 
   extWs.isAlive = true;
 
+  wss.clients
+    .forEach((client: any) => {
+      if (client.session === ws.session) {
+        ws.send(createMessage(client.content, client.name));
+      }
+    });
   ws.on('pong', () => {
       extWs.isAlive = true;
   });
@@ -96,27 +103,35 @@ wss.on('connection', (ws: WebSocket) => {
 
       const message = JSON.parse(msg) as Message;
 
-      setTimeout(() => {
-          if (false) {
+      ws.name = message.sender;
+      if (message.content !== 'ClearVotes') {
+        ws.content = message.content;
+        setTimeout(() => {
+          wss.clients
+            .forEach((client: any) => {
+              if (client.session === ws.session) {
+                client.send(createMessage(message.content, message.sender));
+              }
+            });
 
-              // send back the message to the other clients
+        }, 100);
+      } else {
+        wss.clients
+          .forEach((client: any) => {
+            if (client.session === ws.session) {
               wss.clients
-                  .forEach(client => {
-                      if (client !== ws) {
-                          client.send(createMessage(message.content, message.sender));
-                      }
-                  });
+                .forEach((connectedClient: any) => {
+                  if (client.session === connectedClient.session) {
+                    connectedClient.content = undefined;
+                    client.send(createMessage(undefined, connectedClient.name));
+                  }
+                });
+            }
+          });
+      }
 
-          }
-
-          ws.send(createMessage(`You sent -> ${message.content}`));
-
-      }, 1000);
 
   });
-
-  // send immediatly a feedback to the incoming connection
-  ws.send(createMessage('connected'));
 
   ws.on('error', (err) => {
       console.warn(`Client disconnected - reason: ${err}`);
@@ -128,7 +143,16 @@ setInterval(() => {
 
       const extWs = ws as ExtWebSocket;
 
-      if (!extWs.isAlive) { return ws.terminate(); }
+      if (!extWs.isAlive) {
+        wss.clients
+          .forEach((client: any) => {
+            if (client.session === ws.session) {
+              client.send(createMessage('disconnect', ws.name));
+            }
+          });
+        console.log('client Disconnected');
+        return ws.terminate();
+      }
 
       extWs.isAlive = false;
       ws.ping(null, undefined);

@@ -1,2 +1,10 @@
 /* You can add global styles to this file, and also import other style files */
 @import "~novo-elements/novo-elements";
+
+body {
+  background-color: #F4F4F4;
+  color: #FFF;
+  .novo-card, .novo-card>main {
+    background-color: #3D464D;
+  }
+}

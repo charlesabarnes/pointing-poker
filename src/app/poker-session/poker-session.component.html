@@ -1,6 +1,60 @@
-<p>
-{{ id }}
-{{ name }}
-  <li *ngFor="let userName of userNames"> {{userName}} - {{ pointValues[userName] }}</li>
-</p>
-<novo-tiles [options]="options" (onChange)="send($event)" [(ngModel)]="selectedPointValue"></novo-tiles>
+<div>
+
+  <div class="top-card">
+  <novo-card>
+    <novo-form [form]="form" *ngIf="form">
+      <div class="novo-form-row">
+        <novo-control [form]="form" [control]="nameControl"></novo-control>
+      </div>
+    </novo-form> 
+    <div class="action-buttons">
+      <button theme="primary" color="negative" icon="times" (click)="clearVotes()">Clear Votes</button>
+      <button theme="primary" icon="search" (click)="doShowValues()">Show Votes</button>
+    </div>
+
+    <div class="point-value-container">
+      <h3>Select Point Value</h3>
+      <novo-tiles [options]="options" (onChange)="send($event)" [(ngModel)]="selectedPointValue"></novo-tiles>
+    </div>
+
+  </novo-card>
+  </div>
+
+
+  <div class="mid-cards">
+  <novo-card>
+    <div class="point-list">
+      <div class="user-info">
+        <div class="player-name">
+          <h3>Player</h3>
+        </div>
+        <div class="point-value">
+          <h3>Points</h3>
+        </div>
+      </div>
+      <div class="user-info" *ngFor="let userName of userNames">
+        <div class="player-name">
+          <span [ngStyle]="{'font-weight': userName == name ? '900' : '300'}">{{userName}}</span>
+        </div>
+        <div class="point-value">
+          <span *ngIf="showValues">{{pointValues[userName]}}</span><i *ngIf="!showValues" class="bhi-circle" [ngStyle]="{'color': pointValues[userName] ? '#8CC152' : '#DA4453'}"></i>
+        </div>
+      </div>
+  
+    </div>
+  </novo-card>
+  <novo-card>
+    <div class="point-counts">
+      <div class="user-info" *ngFor="let userName of userNames">
+        <div class="player-name">{{userName}}</div>
+        <div class="point-value">{{ pointValues[userName] }}</div>
+      </div>
+  
+    </div>
+  </novo-card>
+  </div>
+
+
+</div>
+
+

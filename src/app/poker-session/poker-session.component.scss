@@ -1,0 +1,39 @@
+:host {
+  .top-card {
+    margin: 30px;
+    .action-buttons{
+      display: flex;
+      justify-content: space-between;
+      padding: 20px;
+      max-width: 400px;
+    }
+    
+    .point-value-container {
+      padding: 20px;
+    }
+  }
+  .mid-cards {
+    flex-direction: row;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: 30px;
+    .user-info {
+      flex-direction: row;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      span {
+        font-size: 20px;
+      }
+    }
+    novo-card {
+      flex: 0 1 45%;
+      div.point-list, div.point-counts {
+        background-color: #3D464D;
+        padding: 50px;
+      }
+    }
+  }
+
+}

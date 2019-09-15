@@ -3,7 +3,14 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { AppComponent } from './app.component';
-import { NovoFormModule, NovoElementsModule, NovoModalService, FieldInteractionApi, NovoToastService, NovoTilesModule } from 'novo-elements';
+import {
+  NovoFormModule,
+  NovoElementsModule,
+  NovoModalService,
+  FieldInteractionApi,
+  NovoToastService,
+  NovoTilesModule
+} from 'novo-elements';
 import { PokerSessionComponent } from './poker-session/poker-session.component';
 import { CreateSessionComponent } from './create-session/create-session.component';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';

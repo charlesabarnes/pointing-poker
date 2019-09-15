@@ -1,16 +1,12 @@
-<header theme="light" [condensed]="true">
+<header title="Pointing Poker" theme="dark" [condensed]="true">
   <utils>
-    <util-action icon="clipboard" tooltip="Copy Session Link"></util-action>
-    <util-action icon="tools" tooltip="Change settings"></util-action>
-  </utils>
-  <div class="entity-header" novo-title>
-    <span class="id">{{ 'name' }}</span>
-    <header-spacer></header-spacer>
     <span class="name">{{ name }}</span>
     <header-spacer></header-spacer>
-  </div>
+    <util-action icon="clipboard" tooltip="Copy Session Link" [tooltipAutoPosition]="true" [removeTooltipArrow]="true"></util-action>
+    <util-action icon="tools" tooltip="Change settings" [tooltipAutoPosition]="true" [removeTooltipArrow]="true"></util-action>
+  </utils>
+  <div class="entity-header" novo-title></div>
 </header>
 <div *ngIf="name">
   <router-outlet></router-outlet>
 </div>
-
