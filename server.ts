@@ -15,6 +15,7 @@ import * as http from 'http';
 import * as express from 'express';
 import * as WebSocket from 'ws';
 import {join} from 'path';
+import { disconnect } from 'cluster';
 
 // Faster server renders w/ Prod mode (dev mode never needed)
 enableProdMode();
@@ -104,7 +105,28 @@ wss.on('connection', (ws: WebSocket, req: Request) => {
       const message = JSON.parse(msg) as Message;
 
       ws.name = message.sender;
-      if (message.content !== 'ClearVotes') {
+      if (message.content === 'ClearVotes') {
+        wss.clients
+          .forEach((client: any) => {
+            if (client.session === ws.session) {
+              wss.clients
+                .forEach((connectedClient: any) => {
+                  if (client.session === connectedClient.session && connectedClient.content !== 'disconnect') {
+                    connectedClient.content = undefined;
+                    client.send(createMessage(undefined, connectedClient.name));
+                  }
+                });
+            }
+          });
+      } else if (message.content === 'spectate') {
+        wss.clients
+          .forEach((client: any) => {
+            if (client.session === ws.session) {
+              client.send(createMessage('disconnect', ws.name));
+              ws.content = 'disconnect';
+            }
+          });
+      } else {
         ws.content = message.content;
         setTimeout(() => {
           wss.clients
@@ -115,19 +137,6 @@ wss.on('connection', (ws: WebSocket, req: Request) => {
             });
 
         }, 100);
-      } else {
-        wss.clients
-          .forEach((client: any) => {
-            if (client.session === ws.session) {
-              wss.clients
-                .forEach((connectedClient: any) => {
-                  if (client.session === connectedClient.session) {
-                    connectedClient.content = undefined;
-                    client.send(createMessage(undefined, connectedClient.name));
-                  }
-                });
-            }
-          });
       }
 
 

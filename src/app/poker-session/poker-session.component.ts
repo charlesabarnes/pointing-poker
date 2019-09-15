@@ -5,7 +5,7 @@ import { NovoFormGroup, TextBoxControl, FormUtils } from 'novo-elements';
 export class Message {
   constructor(
     public sender: string,
-    public content: string,
+    public content: string | number,
     public session: string
   ) { }
 }
@@ -24,6 +24,7 @@ export class PokerSessionComponent implements OnInit {
   public form: NovoFormGroup;
   public nameControl: TextBoxControl;
   public _showValues: boolean = false; // tslint:disable-line
+  public _spectator: boolean = false; // tslint:disable-line
   public options: any[] = [
     {
       label: '.5',
@@ -108,6 +109,15 @@ export class PokerSessionComponent implements OnInit {
     this.send('ClearVotes');
   }
 
+  get spectator(): boolean {
+    return this._spectator;
+  }
+
+  set spectator(value: boolean) {
+    this._spectator = value;
+    this.send(value ? 'spectate' : 0);
+  }
+
   private handleSocketUpdates(res: any): void {
     if (res && res.sender !== 'NS') {
       if (res.content === 'disconnect') {
@@ -121,7 +131,7 @@ export class PokerSessionComponent implements OnInit {
     }
   }
 
-  public send(pointValue: string): void {
+  public send(pointValue: string | number): void {
     const message = new Message(this.name, pointValue, this.id);
     this.webSocket.next(message);
   }

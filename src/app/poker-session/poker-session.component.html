@@ -12,9 +12,17 @@
       <button theme="primary" icon="search" (click)="doShowValues()">Show Votes</button>
     </div>
 
-    <div class="point-value-container">
+    <div *ngIf="!spectator" class="point-value-container">
       <h3>Select Point Value</h3>
       <novo-tiles [options]="options" (onChange)="send($event)" [(ngModel)]="selectedPointValue"></novo-tiles>
+    </div>
+
+    <div class="point-value-container">
+      <h3>Spectator switch</h3>
+      <div>
+        <span>Spectate</span>
+        <novo-switch [(ngModel)]="spectator"></novo-switch>
+      </div>
     </div>
 
   </novo-card>
