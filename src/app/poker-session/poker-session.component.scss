@@ -22,6 +22,7 @@
       flex-direction: row;
       display: flex;
       flex-wrap: wrap;
+      min-width: 200px;
       justify-content: space-between;
       span {
         font-size: 20px;
@@ -29,6 +30,7 @@
     }
     novo-card {
       flex: 0 1 45%;
+      padding-bottom: 30px;
       div.point-list, div.point-counts {
         background-color: #3D464D;
         padding: 50px;

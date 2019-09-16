@@ -9,5 +9,5 @@
     </novo-form>
 
   </section>
-  <button theme="primary" icon="check" (click)="save()" data-automation-id="create-modal-save">Join Session</button>
+  <button theme="primary" icon="check" (click)="save()" data-automation-id="create-modal-save" [disabled]="!form.valid">Join Session</button>
 </novo-modal>

@@ -7,4 +7,10 @@ body {
   .novo-card, .novo-card>main {
     background-color: #3D464D;
   }
+  .tile-container {
+    flex-flow: row wrap;
+    .active-indicator {
+      height: calc(39px + 0.32em)
+    }
+  }
 }

@@ -1,5 +1,6 @@
 :host {
   novo-modal { 
     width: 600px;
+    max-width: calc(100vw - 60px);
   }
 }
