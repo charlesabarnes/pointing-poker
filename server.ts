@@ -83,10 +83,14 @@ function createMessage(content: string, sender = 'NS', type: 'chat' | 'points' |
   return JSON.stringify(new Message(content, sender, type));
 }
 
+let connections: any = {};
+
 wss.on('connection', (ws: WebSocket, req: Request) => {
+
 
   const extWs = ws as ExtWebSocket;
   ws.session = req.url.replace('/?session=', '');
+
 
   extWs.isAlive = true;
 
