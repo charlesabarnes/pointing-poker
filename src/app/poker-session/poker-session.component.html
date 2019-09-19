@@ -53,9 +53,20 @@
   </novo-card>
   <novo-card>
     <div class="tip">
-      To point, please select a point value from the top.
+      Chat
     </div>
-
+    <div class="chat">
+      <div #scroller class="chat-box">
+        <div *ngFor="let chat of chatLog" class="chat-row">
+          <span class="name">{{ chat.sender }}</span><span class="text">{{ chat.content }}</span>
+        </div>
+      </div>
+      <novo-form #chatFormRef [form]="chatForm" *ngIf="chatForm" (submit)="sendChat()" autocomplete="off">
+        <div class="novo-form-row">
+          <novo-control [form]="chatForm" [control]="messageControl"></novo-control>
+        </div>
+      </novo-form>
+    </div>
   </novo-card>
   </div>
 

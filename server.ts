@@ -74,12 +74,13 @@ interface ExtWebSocket extends WebSocket {
 export class Message {
   constructor(
       public content: string,
-      public sender: string
+      public sender: string,
+      public type: 'chat' | 'points' | 'action' |'disconnect',
   ) { }
 }
 
-function createMessage(content: string, sender = 'NS'): string {
-  return JSON.stringify(new Message(content, sender));
+function createMessage(content: string, sender = 'NS', type: 'chat' | 'points' | 'action' | 'disconnect'): string {
+  return JSON.stringify(new Message(content, sender, type));
 }
 
 wss.on('connection', (ws: WebSocket, req: Request) => {
@@ -92,7 +93,7 @@ wss.on('connection', (ws: WebSocket, req: Request) => {
   wss.clients
     .forEach((client: any) => {
       if (client.session === ws.session) {
-        ws.send(createMessage(client.content, client.name));
+        ws.send(createMessage(client.content, client.name, 'points'));
       }
     });
   ws.on('pong', () => {
@@ -105,39 +106,58 @@ wss.on('connection', (ws: WebSocket, req: Request) => {
       const message = JSON.parse(msg) as Message;
 
       ws.name = message.sender;
-      if (message.content === 'ClearVotes') {
-        wss.clients
-          .forEach((client: any) => {
-            if (client.session === ws.session) {
+
+      switch (message.type) {
+        case 'chat':
+          setTimeout(() => {
+            wss.clients
+              .forEach((client: any) => {
+                if (client.session === ws.session) {
+                  client.send(createMessage(message.content, message.sender, 'chat'));
+                }
+              });
+
+          }, 100);
+          break;
+        case 'points':
+          if (message.content === 'ClearVotes') {
+            wss.clients
+              .forEach((client: any) => {
+                if (client.session === ws.session) {
+                  wss.clients
+                    .forEach((connectedClient: any) => {
+                      if (client.session === connectedClient.session && connectedClient.content !== 'disconnect') {
+                        connectedClient.content = undefined;
+                        client.send(createMessage(undefined, connectedClient.name, 'points'));
+                      }
+                    });
+                }
+              });
+          } else if (message.content === 'spectate') {
+            wss.clients
+              .forEach((client: any) => {
+                if (client.session === ws.session) {
+                  client.send(createMessage('disconnect', ws.name, 'disconnect'));
+                  ws.content = 'disconnect';
+                }
+              });
+          } else {
+            ws.content = message.content;
+            setTimeout(() => {
               wss.clients
-                .forEach((connectedClient: any) => {
-                  if (client.session === connectedClient.session && connectedClient.content !== 'disconnect') {
-                    connectedClient.content = undefined;
-                    client.send(createMessage(undefined, connectedClient.name));
+                .forEach((client: any) => {
+                  if (client.session === ws.session) {
+                    client.send(createMessage(message.content, message.sender, 'points'));
                   }
                 });
-            }
-          });
-      } else if (message.content === 'spectate') {
-        wss.clients
-          .forEach((client: any) => {
-            if (client.session === ws.session) {
-              client.send(createMessage('disconnect', ws.name));
-              ws.content = 'disconnect';
-            }
-          });
-      } else {
-        ws.content = message.content;
-        setTimeout(() => {
-          wss.clients
-            .forEach((client: any) => {
-              if (client.session === ws.session) {
-                client.send(createMessage(message.content, message.sender));
-              }
-            });
 
-        }, 100);
+            }, 100);
+          }
+          break;
+        default:
+          break;
       }
+
 
 
   });
@@ -146,7 +166,7 @@ wss.on('connection', (ws: WebSocket, req: Request) => {
     wss.clients
       .forEach((client: any) => {
         if (client.session === ws.session && ws !== client) {
-          client.send(createMessage('disconnect', ws.name));
+          client.send(createMessage('disconnect', ws.name, 'disconnect'));
         }
       });
   });
@@ -154,14 +174,12 @@ wss.on('connection', (ws: WebSocket, req: Request) => {
 
 setInterval(() => {
   wss.clients.forEach((ws: WebSocket) => {
-
       const extWs = ws as ExtWebSocket;
-
       if (!extWs.isAlive) {
         wss.clients
           .forEach((client: any) => {
             if (client.session === ws.session && ws !== client) {
-              client.send(createMessage('disconnect', ws.name));
+              client.send(createMessage('disconnect', ws.name, 'disconnect'));
             }
           });
         console.log('client Disconnected');

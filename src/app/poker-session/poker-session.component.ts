@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { NovoFormGroup, TextBoxControl, FormUtils } from 'novo-elements';
@@ -6,7 +6,8 @@ export class Message {
   constructor(
     public sender: string,
     public content: string | number,
-    public session: string
+    public session: string,
+    public type: 'chat' | 'points' | 'action' |'disconnect',
   ) { }
 }
 @Component({
@@ -14,15 +15,17 @@ export class Message {
   templateUrl: './poker-session.component.html',
   styleUrls: ['./poker-session.component.scss']
 })
-export class PokerSessionComponent implements OnInit {
-
+export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public id: string;
   public name: string;
   public _webSocket: WebSocketSubject<any>; // tslint:disable-line
   public pointValues: any = {};
   public selectedPointValue: any;
+  public chatLog: Message[] = [];
   public form: NovoFormGroup;
+  public chatForm: NovoFormGroup;
   public nameControl: TextBoxControl;
+  public messageControl: TextBoxControl;
   public _showValues: boolean = false; // tslint:disable-line
   public _spectator: boolean = false; // tslint:disable-line
   public options: any[] = [
@@ -64,6 +67,7 @@ export class PokerSessionComponent implements OnInit {
       disabled: true
     },
   ];
+  @ViewChild('scroller') private scroller: ElementRef;
 
   constructor(private route: ActivatedRoute, public formUtils: FormUtils) { }
 
@@ -73,7 +77,13 @@ export class PokerSessionComponent implements OnInit {
     if (this.name) {
       this.webSocket.subscribe(this.handleSocketUpdates.bind(this));
       this.createForm();
+      this.createChatForm();
     }
+  }
+
+  public ngAfterViewChecked() {
+    this.scrollToBottom();
+    document.querySelector('.chat .novo-form').setAttribute('autocomplete', 'off')
   }
 
   get webSocket(): WebSocketSubject<any> {
@@ -81,7 +91,7 @@ export class PokerSessionComponent implements OnInit {
       this._webSocket = webSocket(
         `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host.replace('4200', '4000')}/?session=${this.id}`
         );
-      this._webSocket.next(new Message(this.name, undefined, this.id));
+      this._webSocket.next(new Message(this.name, undefined, this.id, 'points'));
     }
     return this._webSocket;
   }
@@ -118,22 +128,45 @@ export class PokerSessionComponent implements OnInit {
     this.send(value ? 'spectate' : 0);
   }
 
-  private handleSocketUpdates(res: any): void {
+  private handleSocketUpdates(res: Message): void {
     if (res && res.sender !== 'NS') {
-      if (res.content === 'disconnect') {
-        delete this.pointValues[res.sender];
-      } else {
-        this.pointValues[res.sender] = res.content;
-        if (res.sender === this.name && res.content === undefined) {
-          this.selectedPointValue = 0;
-        }
+      switch (res.type) {
+        case 'disconnect':
+          delete this.pointValues[res.sender];
+          break;
+        case 'points':
+          this.pointValues[res.sender] = res.content;
+          if (res.sender === this.name && res.content === undefined) {
+            this.selectedPointValue = 0;
+          }
+          break;
+        case 'chat':
+          this.chatLog.push(res)
+          break;
+        default:
+          break;
       }
     }
   }
 
-  public send(pointValue: string | number): void {
-    const message = new Message(this.name, pointValue, this.id);
+  public send(content: string | number, type: any = 'points'): void {
+    const message = new Message(this.name, content, this.id, type);
     this.webSocket.next(message);
+  }
+
+  public sendChat(): void {
+    this.send(this.chatForm.value.message, 'chat');
+    this.scrollToBottom();
+    this.chatForm.setValue({message: ''});
+  }
+
+  public createChatForm() {
+    this.messageControl = new TextBoxControl({
+      key: 'message',
+      required: false,
+      placeholder: 'Send Message',
+    });
+    this.chatForm = this.formUtils.toFormGroup([this.messageControl]);
   }
 
   public createForm() {
@@ -144,5 +177,11 @@ export class PokerSessionComponent implements OnInit {
       interactions: [{event: 'change', script: () => {}}]
     });
     this.form = this.formUtils.toFormGroup([this.nameControl]);
+  }
+
+  scrollToBottom(): void {
+    try {
+      this.scroller.nativeElement.scrollTop = this.scroller.nativeElement.scrollHeight;
+    } catch (err) { }
   }
 }

@@ -38,4 +38,32 @@
     }
   }
 
+  .chat {
+    background-color: #F4F4F4;
+    .chat-box {
+      height: 300px;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      .chat-row {
+        &:nth-child(even) {
+          background: rgb(228, 228, 228)
+          
+        }
+        span {
+          &.name {
+            font-weight: 700;
+            padding-right: 15px;
+          }
+          color: #3D464D;
+          word-break: break-all;
+        }
+      }
+
+    }
+
+  }
+
 }

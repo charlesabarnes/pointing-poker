@@ -2,7 +2,7 @@
   <header class="apply-modal-header" title="Please update your name" theme="neutral" >
   </header>
   <section>
-    <novo-form [form]="form" *ngIf="form">
+    <novo-form [form]="form" *ngIf="form" (submit)="save()">
       <div class="novo-form-row">
           <novo-control [form]="form" [control]="nameControl"></novo-control>
         </div>
