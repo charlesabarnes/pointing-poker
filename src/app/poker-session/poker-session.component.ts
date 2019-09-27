@@ -1,13 +1,13 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
-import { NovoFormGroup, TextBoxControl, FormUtils } from 'novo-elements';
+import { NovoFormGroup, TextBoxControl, FormUtils, FieldInteractionApi } from 'novo-elements';
 export class Message {
   constructor(
     public sender: string,
     public content: string | number,
     public session: string,
-    public type: 'chat' | 'points' | 'action' |'disconnect',
+    public type: 'chat' | 'points' | 'action' |'disconnect' | 'description',
   ) { }
 }
 @Component({
@@ -21,6 +21,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public _webSocket: WebSocketSubject<any>; // tslint:disable-line
   public pointValues: any = {};
   public selectedPointValue: any;
+  public lastDescription = '';
   public chatLog: Message[] = [];
   public form: NovoFormGroup;
   public chatForm: NovoFormGroup;
@@ -83,7 +84,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
 
   public ngAfterViewChecked() {
     this.scrollToBottom();
-    document.querySelector('.chat .novo-form').setAttribute('autocomplete', 'off')
+    document.querySelector('.chat .novo-form').setAttribute('autocomplete', 'off');
   }
 
   get webSocket(): WebSocketSubject<any> {
@@ -141,7 +142,10 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
           }
           break;
         case 'chat':
-          this.chatLog.push(res)
+          this.chatLog.push(res);
+          break;
+        case 'description':
+          this.updateDescription(res.content);
           break;
         default:
           break;
@@ -174,9 +178,18 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
       key: 'storyDescription',
       required: false,
       placeholder: 'Story Description',
-      interactions: [{event: 'change', script: () => {}}]
+      interactions: [{event: 'change', script: (API: FieldInteractionApi) => {
+        if (API.getActiveValue() !== this.lastDescription) {
+          this.send(API.getActiveValue(), 'description');
+        }
+      }}]
     });
     this.form = this.formUtils.toFormGroup([this.nameControl]);
+  }
+
+  private updateDescription(description: any): void {
+    this.lastDescription = description;
+    this.form.setValue({storyDescription: description});
   }
 
   scrollToBottom(): void {

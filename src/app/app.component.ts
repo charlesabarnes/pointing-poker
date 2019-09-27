@@ -54,7 +54,7 @@ export class AppComponent implements OnInit {
     }
   }
 
-  private changeName() {
+  public changeName() {
     this.modalService.open(CreateSessionComponent).onClosed.then(this.startSession.bind(this));
   }
 

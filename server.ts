@@ -75,15 +75,15 @@ export class Message {
   constructor(
       public content: string,
       public sender: string,
-      public type: 'chat' | 'points' | 'action' |'disconnect',
+      public type: 'chat' | 'points' | 'action' |'disconnect' | 'description',
   ) { }
 }
 
-function createMessage(content: string, sender = 'NS', type: 'chat' | 'points' | 'action' | 'disconnect'): string {
+function createMessage(content: string, sender = 'NS', type: 'chat' | 'points' | 'action' |'disconnect' | 'description'): string {
   return JSON.stringify(new Message(content, sender, type));
 }
 
-let connections: any = {};
+const connections: any = {};
 
 wss.on('connection', (ws: WebSocket, req: Request) => {
 
@@ -118,6 +118,17 @@ wss.on('connection', (ws: WebSocket, req: Request) => {
               .forEach((client: any) => {
                 if (client.session === ws.session) {
                   client.send(createMessage(message.content, message.sender, 'chat'));
+                }
+              });
+
+          }, 100);
+          break;
+        case 'description':
+          setTimeout(() => {
+            wss.clients
+              .forEach((client: any) => {
+                if (client.session === ws.session) {
+                  client.send(createMessage(message.content, message.sender, 'description'));
                 }
               });
 

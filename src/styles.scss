@@ -13,4 +13,11 @@ body {
       height: calc(39px + 0.32em)
     }
   }
+  app-poker-session {
+    .top-card {
+      div.novo-form-container input{
+        color: #F4F4F4 !important;
+      }
+    }
+  }
 }
