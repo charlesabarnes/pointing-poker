@@ -39,6 +39,7 @@
     "core-js": "^2.5.4",
     "date-fns": "^2.2.1",
     "express": "^4.15.2",
+    "ngx-clipboard": "^12.2.1",
     "novo-elements": "^3.12.1",
     "roboto-fontface": "^0.10.0",
     "rxjs": "~6.3.3",

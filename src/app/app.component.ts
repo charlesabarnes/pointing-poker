@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewContainerRef } from '@angular/core';
-import { NovoModalService } from 'novo-elements';
+import { NovoModalService, NovoToastService } from 'novo-elements';
 import { CreateSessionComponent } from './create-session/create-session.component';
 import { Router } from '@angular/router';
 const POKER_NAME = 'POKER_NAME';
@@ -11,16 +11,36 @@ const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  constructor(public modalService: NovoModalService, public ref: ViewContainerRef, public router: Router) {
+  constructor(
+    public modalService: NovoModalService,
+    public ref: ViewContainerRef,
+    public router: Router,
+    public toastService: NovoToastService
+    ) {
     this.modalService.parentViewContainer = ref;
+    this.toastService.parentViewContainer = ref;
   }
   public name: string;
 
   public ngOnInit(): void {
     this.name = sessionStorage.getItem(POKER_NAME);
     if (!this.name) {
-      this.modalService.open(CreateSessionComponent).onClosed.then(this.startSession.bind(this));
+      this.changeName();
     }
+  }
+
+  public copiedToClipboard(): void {
+    this.toastService.alert({
+      title: 'Url Copied',
+      message: 'Copied Url to clipboard',
+      icon: 'clipboard',
+      theme: 'success',
+      position: 'fixedTop',
+    });
+  }
+
+  get currentUrl(): string {
+    return window.location.href;
   }
 
   private startSession(name: string): void {
@@ -32,6 +52,10 @@ export class AppComponent implements OnInit {
         location.reload();
       }
     }
+  }
+
+  private changeName() {
+    this.modalService.open(CreateSessionComponent).onClosed.then(this.startSession.bind(this));
   }
 
   private generateSessionId(length: number): string {
