@@ -126,7 +126,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
 
   set spectator(value: boolean) {
     this._spectator = value;
-    this.send(value ? 'spectate' : 0);
+    this.send(value ? 'spectate' : 0, value ? 'disconnect' : 0);
   }
 
   private handleSocketUpdates(res: Message): void {
