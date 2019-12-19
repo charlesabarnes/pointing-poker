@@ -21,6 +21,7 @@ export class AppComponent implements OnInit {
     this.toastService.parentViewContainer = ref;
   }
   public name: string;
+  public isMoving = false;
 
   public ngOnInit(): void {
     this.name = sessionStorage.getItem(POKER_NAME);
@@ -56,6 +57,21 @@ export class AppComponent implements OnInit {
 
   public changeName() {
     this.modalService.open(CreateSessionComponent).onClosed.then(this.startSession.bind(this));
+  }
+
+  public testConsensus() {
+    this.isMoving = !this.isMoving;
+    setTimeout(() => {
+      this.isMoving = !this.isMoving;
+    }, 5000);
+  }
+
+  public getBodyClass() {
+    return this.isMoving ? 'spinning' : '';
+  }
+
+  public getModalClass() {
+    return this.isMoving ? 'bouncing centered' : 'centered';
   }
 
   private generateSessionId(length: number): string {

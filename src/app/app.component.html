@@ -1,7 +1,10 @@
+<html>
+<body [ngClass]="getBodyClass()">
 <header title="Pointing Poker" theme="dark" [condensed]="true">
   <utils>
     <span class="name">{{ name }}</span>
     <header-spacer></header-spacer>
+    <util-action icon="bolt" tooltip="Test Consensus" [tooltipAutoPosition]="true" [removeTooltipArrow]="true" (click)="testConsensus()"></util-action>
     <util-action icon="clipboard" tooltip="Copy Session Link" [tooltipAutoPosition]="true" [removeTooltipArrow]="true"  ngxClipboard [cbContent]="currentUrl" (click)="copiedToClipboard()"></util-action>
     <util-action icon="tools" tooltip="Change settings" [tooltipAutoPosition]="true" [removeTooltipArrow]="true" (click)="changeName()"></util-action>
   </utils>
@@ -10,3 +13,6 @@
 <div class="outlet-container">
   <router-outlet></router-outlet>
 </div>
+</body>
+<div *ngIf="isMoving" [ngClass]="getModalClass()">CONSENSUS!!!</div>
+</html>
