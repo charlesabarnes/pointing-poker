@@ -17,6 +17,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NoSessionComponent } from './no-session/no-session.component';
 import { ClipboardModule } from 'ngx-clipboard';
+import { ChartsModule } from 'ng2-charts';
 
 const appRoutes: Routes = [
   { path: '', component: NoSessionComponent },
@@ -39,7 +40,8 @@ const appRoutes: Routes = [
       FormsModule,
       BrowserAnimationsModule,
       RouterModule.forRoot( appRoutes, { enableTracing: false, useHash: false }),
-      ClipboardModule
+      ClipboardModule,
+      ChartsModule
   ],
   providers: [
     NovoModalService,
@@ -49,6 +51,9 @@ const appRoutes: Routes = [
   bootstrap: [AppComponent],
   entryComponents: [
     CreateSessionComponent
+  ],
+  exports: [
+    ChartsModule
   ]
 })
 export class AppModule { }
