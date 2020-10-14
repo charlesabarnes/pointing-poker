@@ -4,6 +4,8 @@ import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { NovoFormGroup, TextBoxControl, FormUtils, FieldInteractionApi } from 'novo-elements';
 import { ChartOptions, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
+import * as pluginDataLabels from 'chartjs-plugin-datalabels';
+
 export class Message {
   constructor(
     public sender: string,
@@ -119,7 +121,8 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
 
   public clearVotes(): void {
     this.showValues = false;
-    this.send('ClearVotes');
+    // this.updateDescription('');
+    this.send('', 'description');
   }
 
   get spectator(): boolean {
@@ -206,7 +209,23 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     responsive: true,
     legend: {
       position: 'top',
+      labels: {
+        fontColor: '#fff',
+        fontSize: 16,
+      },
     },
+    plugins: {
+      datalabels: {
+        color: '#fff',
+        font: {
+          size: 20,
+        },
+        formatter: (value, ctx) => {
+          const label = ctx.chart.data.labels[ctx.dataIndex];
+          return label;
+        },
+      },
+    }
   };
 
   get showChart(): boolean {
@@ -219,17 +238,19 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     for (const user in this.pointValues) {
       if (this.pointValues.hasOwnProperty(user)) {
         point = this.pointValues[user]
-        pointValueCounts[point] = pointValueCounts[point] ? pointValueCounts[point]++ : 1;
+        pointValueCounts[point] = pointValueCounts[point] ? pointValueCounts[point] + 1 : 1;
       }
     }
     return pointValueCounts;
   }
 
+  public pieChartPlugins = [pluginDataLabels];
+
   get pointDistributionChartData(): number[] {
     const pointValueCounts = this.getPointValueCountObject();
     let data: number[] = [];
     for (const pointValue in pointValueCounts) {
-      if (this.pointValues.hasOwnProperty(pointValue)) {
+      if (pointValueCounts.hasOwnProperty(pointValue)) {
         data.push(pointValueCounts[pointValue]);
       }
     }
@@ -239,7 +260,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     const pointValueCounts = this.getPointValueCountObject();
     let data: string[] = [];
     for (const pointValue in pointValueCounts) {
-      if (this.pointValues.hasOwnProperty(pointValue)) {
+      if (pointValueCounts.hasOwnProperty(pointValue)) {
         data.push(pointValue);
       }
     }
@@ -249,7 +270,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public showLegend = true;
   public pieChartColors = [
     {
-      backgroundColor: ['rgba(255,0,0,0.3)', 'rgba(0,255,0,0.3)', 'rgba(0,0,255,0.3)'],
+      backgroundColor: ['#AA6699', '#FFAA44', '#3399DD', '#44BB77', '#662255', '#BB5566', '#454EA0', '#A9ADBB'],
     },
   ];
 }
