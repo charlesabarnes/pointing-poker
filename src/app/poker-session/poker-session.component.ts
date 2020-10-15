@@ -122,7 +122,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public clearVotes(): void {
     this.showValues = false;
     this.send('ClearVotes');
-    this.send('', 'description');
+    this.updateDescription('');
   }
 
   get spectator(): boolean {
@@ -236,7 +236,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     let pointValueCounts = {};
     let point: number;
     for (const user in this.pointValues) {
-      if (this.pointValues.hasOwnProperty(user)) {
+      if (this.pointValues.hasOwnProperty(user) && this.pointValues[user] !== 'disconnect') {
         point = this.pointValues[user]
         pointValueCounts[point] = pointValueCounts[point] ? pointValueCounts[point] + 1 : 1;
       }
