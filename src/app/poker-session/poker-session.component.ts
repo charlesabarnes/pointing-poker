@@ -122,7 +122,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public clearVotes(): void {
     this.showValues = false;
     this.send('ClearVotes');
-    this.updateDescription('');
+    this.send('', 'description');
   }
 
   get spectator(): boolean {
