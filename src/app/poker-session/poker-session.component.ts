@@ -121,7 +121,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
 
   public clearVotes(): void {
     this.showValues = false;
-    // this.updateDescription('');
+    this.send('ClearVotes');
     this.send('', 'description');
   }
 
