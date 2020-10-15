@@ -2,12 +2,16 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@ang
 import { ActivatedRoute } from '@angular/router';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { NovoFormGroup, TextBoxControl, FormUtils, FieldInteractionApi } from 'novo-elements';
+import { ChartOptions, ChartType } from 'chart.js';
+import { Label } from 'ng2-charts';
+import * as pluginDataLabels from 'chartjs-plugin-datalabels';
+
 export class Message {
   constructor(
     public sender: string,
     public content: string | number,
     public session: string,
-    public type: 'chat' | 'points' | 'action' |'disconnect' | 'description',
+    public type: 'chat' | 'points' | 'action' | 'disconnect' | 'description',
   ) { }
 }
 @Component({
@@ -88,10 +92,10 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   }
 
   get webSocket(): WebSocketSubject<any> {
-    if (typeof this._webSocket ===  'undefined') {
+    if (typeof this._webSocket === 'undefined') {
       this._webSocket = webSocket(
         `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host.replace('4200', '4000')}/?session=${this.id}`
-        );
+      );
       this._webSocket.next(new Message(this.name, undefined, this.id, 'points'));
     }
     return this._webSocket;
@@ -117,7 +121,8 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
 
   public clearVotes(): void {
     this.showValues = false;
-    this.send('ClearVotes');
+    // this.updateDescription('');
+    this.send('', 'description');
   }
 
   get spectator(): boolean {
@@ -161,7 +166,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public sendChat(): void {
     this.send(this.chatForm.value.message, 'chat');
     this.scrollToBottom();
-    this.chatForm.setValue({message: ''});
+    this.chatForm.setValue({ message: '' });
   }
 
   public createChatForm() {
@@ -178,18 +183,20 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
       key: 'storyDescription',
       required: false,
       placeholder: 'Story Description',
-      interactions: [{event: 'change', script: (API: FieldInteractionApi) => {
-        if (API.getActiveValue() !== this.lastDescription) {
-          this.send(API.getActiveValue(), 'description');
+      interactions: [{
+        event: 'change', script: (API: FieldInteractionApi) => {
+          if (API.getActiveValue() !== this.lastDescription) {
+            this.send(API.getActiveValue(), 'description');
+          }
         }
-      }}]
+      }]
     });
     this.form = this.formUtils.toFormGroup([this.nameControl]);
   }
 
   private updateDescription(description: any): void {
     this.lastDescription = description;
-    this.form.setValue({storyDescription: description});
+    this.form.setValue({ storyDescription: description });
   }
 
   scrollToBottom(): void {
@@ -197,4 +204,73 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
       this.scroller.nativeElement.scrollTop = this.scroller.nativeElement.scrollHeight;
     } catch (err) { }
   }
+
+  public pointDistributionChartOptions: ChartOptions = {
+    responsive: true,
+    legend: {
+      position: 'top',
+      labels: {
+        fontColor: '#fff',
+        fontSize: 16,
+      },
+    },
+    plugins: {
+      datalabels: {
+        color: '#fff',
+        font: {
+          size: 20,
+        },
+        formatter: (value, ctx) => {
+          const label = ctx.chart.data.labels[ctx.dataIndex];
+          return label;
+        },
+      },
+    }
+  };
+
+  get showChart(): boolean {
+    return this.showValues && Object.keys(this.pointValues).length > 0;
+  }
+
+  private getPointValueCountObject() {
+    let pointValueCounts = {};
+    let point: number;
+    for (const user in this.pointValues) {
+      if (this.pointValues.hasOwnProperty(user)) {
+        point = this.pointValues[user]
+        pointValueCounts[point] = pointValueCounts[point] ? pointValueCounts[point] + 1 : 1;
+      }
+    }
+    return pointValueCounts;
+  }
+
+  public pieChartPlugins = [pluginDataLabels];
+
+  get pointDistributionChartData(): number[] {
+    const pointValueCounts = this.getPointValueCountObject();
+    let data: number[] = [];
+    for (const pointValue in pointValueCounts) {
+      if (pointValueCounts.hasOwnProperty(pointValue)) {
+        data.push(pointValueCounts[pointValue]);
+      }
+    }
+    return data;
+  };
+  get pointDistributionChartLabels(): Label[] {
+    const pointValueCounts = this.getPointValueCountObject();
+    let data: string[] = [];
+    for (const pointValue in pointValueCounts) {
+      if (pointValueCounts.hasOwnProperty(pointValue)) {
+        data.push(pointValue);
+      }
+    }
+    return data;
+  }
+  public pointDistributionChartType: ChartType = 'pie';
+  public showLegend = true;
+  public pieChartColors = [
+    {
+      backgroundColor: ['#AA6699', '#FFAA44', '#3399DD', '#44BB77', '#662255', '#BB5566', '#454EA0', '#A9ADBB'],
+    },
+  ];
 }
