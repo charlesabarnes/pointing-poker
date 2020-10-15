@@ -270,7 +270,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public showLegend = true;
   public pieChartColors = [
     {
-      backgroundColor: ['#AA6699', '#FFAA44', '#3399DD', '#44BB77', '#662255', '#BB5566', '#454EA0', '#A9ADBB'],
+      backgroundColor: ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0'],
     },
   ];
 }
