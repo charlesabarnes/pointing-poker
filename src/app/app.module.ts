@@ -18,6 +18,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NoSessionComponent } from './no-session/no-session.component';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ChartsModule } from 'ng2-charts';
+import { ConsensusComponent } from './consensus/consensus.component';
 
 const appRoutes: Routes = [
   { path: '', component: NoSessionComponent },
@@ -29,7 +30,8 @@ const appRoutes: Routes = [
       AppComponent,
       PokerSessionComponent,
       CreateSessionComponent,
-      NoSessionComponent
+      NoSessionComponent,
+      ConsensusComponent
    ],
    imports: [
       BrowserModule.withServerTransition({ appId: 'serverApp'}),

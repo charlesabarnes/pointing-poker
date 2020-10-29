@@ -5,6 +5,7 @@ import { NovoFormGroup, TextBoxControl, FormUtils, FieldInteractionApi } from 'n
 import { ChartOptions, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import * as pluginDataLabels from 'chartjs-plugin-datalabels';
+import { ConsensusComponent } from '../consensus/consensus.component';
 
 export class Message {
   constructor(
@@ -33,6 +34,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public messageControl: TextBoxControl;
   public _showValues: boolean = false; // tslint:disable-line
   public _spectator: boolean = false; // tslint:disable-line
+  private _valuesShown: boolean = false; // tslint:disable-line
   public options: any[] = [
     {
       label: '.5',
@@ -73,6 +75,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     },
   ];
   @ViewChild('scroller') private scroller: ElementRef;
+  @ViewChild(ConsensusComponent) private consensusComponent: ConsensusComponent;
 
   constructor(private route: ActivatedRoute, public formUtils: FormUtils) { }
 
@@ -106,9 +109,19 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   }
 
   get showValues(): boolean {
-    return Object.keys(this.pointValues).filter((name: any) => {
+    const showValues: boolean = Object.keys(this.pointValues).length > 1 &&  Object.keys(this.pointValues).filter((name: any) => {
       return !this.pointValues[name];
     }).length === 0 || this._showValues;
+
+    if (showValues && !this._valuesShown) {
+      const uniquePoints: any[] = Array.from(new Set(Object.values(this.pointValues)).values());
+      if (uniquePoints.length === 1) {
+        this.consensusComponent.show(uniquePoints[0]);
+      }
+    }
+
+    this._valuesShown = showValues;
+    return showValues;
   }
 
   set showValues(value: boolean) {
@@ -122,7 +135,6 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public clearVotes(): void {
     this.showValues = false;
     this.send('ClearVotes');
-    this.send('', 'description');
   }
 
   get spectator(): boolean {
@@ -236,8 +248,8 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     let pointValueCounts = {};
     let point: number;
     for (const user in this.pointValues) {
-      if (this.pointValues.hasOwnProperty(user) && this.pointValues[user] !== 'disconnect') {
-        point = this.pointValues[user]
+      if (this.pointValues.hasOwnProperty(user)) {
+        point = this.pointValues[user];
         pointValueCounts[point] = pointValueCounts[point] ? pointValueCounts[point] + 1 : 1;
       }
     }
@@ -261,7 +273,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     let data: string[] = [];
     for (const pointValue in pointValueCounts) {
       if (pointValueCounts.hasOwnProperty(pointValue)) {
-        data.push(pointValue);
+        data.push(pointValue === 'undefined' ? 'No votes' : pointValue);
       }
     }
     return data;

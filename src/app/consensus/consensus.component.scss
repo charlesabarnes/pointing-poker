@@ -1,0 +1,177 @@
+:host {
+  z-index: 1000;
+
+  .container {
+    width: 800px;
+    height: 800px;
+    position:absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -400px;
+    margin-top: -400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    animation: container ease-out 4s;
+    animation-iteration-count: 1;
+
+    div {
+      position:absolute;
+    }
+  }
+  .ribbon-center {
+    width: 368px;
+    height: 368px;
+    background: url(~/assets/images/ribbon-center.png);
+  }
+  .ribbon-text {
+    margin-top: 50px;
+    width: 659px;
+    height: 180px;
+    background: url(~/assets/images/ribbon-text.png);
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(-11deg);
+    animation: ribbonText ease-out 4s;
+
+    span {
+      font-family: 'Gochi Hand', cursive;
+      font-size: 100px;
+      text-shadow: 1px 2px #000;
+      margin-bottom: 25px;
+      -webkit-text-fill-color: white;
+      -webkit-text-stroke-width: 2px;
+      -webkit-text-stroke-color: black;
+    }
+  }
+  .ribbon-outer {
+    width: 510px;
+    height: 510px;
+    background: url(~/assets/images/ribbon-outer.png);
+    animation: outer ease-out 4s;
+    animation-iteration-count: 1;
+  }
+  .ribbon-lower-right {
+  }
+  .ribbon-lower-left {
+  }
+  .leaves {
+    background: url(~/assets/images/leaves.png);
+    width: 380px;
+    height: 635px;
+    animation-iteration-count: 1;
+    transform-origin: 80% 90%;
+    animation-duration: 4s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
+  }
+  .leaves-left {
+    margin-left: -280px;
+    animation-name: rotateInLeft;
+  }
+  .leaves-right {
+    margin-left: -190px;
+    animation-name: rotateInRight;
+    transform: scaleX(-1);
+  }
+
+  @keyframes container {
+    0% {
+      transform:  scaleX(0) scaleY(0);
+      opacity: 0;
+    }
+    5% {
+      transform:  scaleX(1.20) scaleY(1.20);
+    }
+    8% {
+      opacity: 1;
+      transform:  scaleX(1.00) scaleY(1.00);
+    }
+    92% {
+      opacity: 1;
+      transform:  scaleX(1.00) scaleY(1.00);
+    }
+    95% {
+      transform:  scaleX(1.20) scaleY(1.20);
+    }
+    100% {
+      transform:  scaleX(0) scaleY(0);
+      opacity: 0;
+    }
+  }
+  @keyframes ribbonText {
+    0% {
+      transform:  scaleX(0) scaleY(0) rotate(-11deg);
+    }
+    3% {
+      transform:  scaleX(0) scaleY(0) rotate(-11deg);
+    }
+    8% {
+      transform:  scaleX(1.20) scaleY(1.20) rotate(-11deg);
+    }
+    11% {
+      opacity: 1;
+      transform:  scaleX(1.00) scaleY(1.00) rotate(-11deg);
+    }
+    89% {
+      opacity: 1;
+      transform:  scaleX(1.00) scaleY(1.00) rotate(-11deg);
+    }
+    92% {
+      transform:  scaleX(1.20) scaleY(1.20) rotate(-11deg);
+    }
+    97% {
+      transform:  scaleX(0) scaleY(0) rotate(-11deg);
+    }
+    100% {
+      transform:  scaleX(0) scaleY(0) rotate(-11deg);
+    }
+  }
+  @keyframes outer {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(180deg);
+    }
+  }
+  @keyframes rotateInLeft {
+    0% {
+      transform: rotate(40deg) scale3d(0.2, 0.2, 0.2);
+    }
+    3% {
+      transform: rotate(40deg) scale3d(0.2, 0.2, 0.2);
+    }
+    10% {
+      transform: rotate(-5deg) scale3d(1, 1, 1);
+    }
+    13% {
+      transform: rotate(-0deg) scale3d(1, 1, 1);
+    }
+    100% {
+      transform: rotate(2deg) scale3d(1, 1, 1);
+    }
+  }
+  @keyframes rotateInRight {
+    0% {
+      transform: rotate(-40deg) scale3d(-0.2, 0.2, 0.2);
+    }
+    3% {
+      transform: rotate(-40deg) scale3d(-0.2, 0.2, 0.2);
+    }
+    10% {
+      transform: rotate(5deg) scale3d(-1, 1, 1);
+    }
+    13% {
+      transform: rotate(0deg) scale3d(-1, 1, 1);
+    }
+    100% {
+      transform: rotate(-2deg) scale3d(-1, 1, 1);
+    }
+  }
+
+
+}

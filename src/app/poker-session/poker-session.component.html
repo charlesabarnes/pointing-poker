@@ -53,17 +53,16 @@
             <h3>Points</h3>
           </div>
         </div>
-        <ng-container *ngFor="let userName of userNames">
-          <div class="user-info" *ngIf="pointValues[userName] !== 'disconnect'">
-            <div class="player-name">
-              <span [ngStyle]="{'font-weight': userName == name ? '900' : '300'}">{{userName}}</span>
-            </div>
-            <div class="point-value">
-              <span *ngIf="showValues">{{pointValues[userName]}}</span><i *ngIf="!showValues" class="bhi-circle"
-                [ngStyle]="{'color': pointValues[userName] ? '#8CC152' : '#DA4453'}"></i>
-            </div>
+        <div class="user-info" *ngFor="let userName of userNames">
+          <div class="player-name">
+            <span [ngStyle]="{'font-weight': userName == name ? '900' : '300'}">{{userName}}</span>
           </div>
-        </ng-container>
+          <div class="point-value">
+            <span *ngIf="showValues">{{pointValues[userName]}}</span><i *ngIf="!showValues" class="bhi-circle"
+              [ngStyle]="{'color': pointValues[userName] ? '#8CC152' : '#DA4453'}"></i>
+          </div>
+        </div>
+
       </div>
     </novo-card>
     <novo-card>
@@ -84,4 +83,6 @@
       </div>
     </novo-card>
   </div>
+
+  <app-consensus></app-consensus>
 </div>
