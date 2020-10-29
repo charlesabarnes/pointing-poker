@@ -115,7 +115,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
 
     if (showValues && !this._valuesShown) {
       const uniquePoints: any[] = Array.from(new Set(Object.values(this.pointValues)).values());
-      if (uniquePoints.length === 1) {
+      if (uniquePoints.length === 1 && uniquePoints[0]) {
         this.consensusComponent.show(uniquePoints[0]);
       }
     }
