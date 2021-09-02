@@ -5,6 +5,7 @@ import { NovoFormGroup, TextBoxControl, FormUtils, FieldInteractionApi } from 'n
 import { ChartOptions, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import * as pluginDataLabels from 'chartjs-plugin-datalabels';
+import confetti, { create } from 'canvas-confetti';
 
 export class Message {
   constructor(
@@ -14,6 +15,10 @@ export class Message {
     public type: 'chat' | 'points' | 'action' | 'disconnect' | 'description',
   ) { }
 }
+
+// TODO: clean confetti logic
+const createConfettiCanvas = create(undefined, { useWorker: true, resize: true });
+
 @Component({
   selector: 'app-poker-session',
   templateUrl: './poker-session.component.html',
@@ -73,6 +78,39 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     },
   ];
   @ViewChild('scroller') private scroller: ElementRef;
+  public pieChartPlugins = [pluginDataLabels];
+
+  public pointDistributionChartType: ChartType = 'pie';
+  public showLegend = true;
+  public pieChartColors = [
+    {
+      backgroundColor: ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0'],
+    },
+  ];
+  private confettiShot: boolean = false;
+  
+  public pointDistributionChartOptions: ChartOptions = {
+    responsive: true,
+    legend: {
+      position: 'top',
+      labels: {
+        fontColor: '#fff',
+        fontSize: 16,
+      },
+    },
+    plugins: {
+      datalabels: {
+        color: '#fff',
+        font: {
+          size: 20,
+        },
+        formatter: (value, ctx) => {
+          const label = ctx.chart.data.labels[ctx.dataIndex];
+          return label;
+        },
+      },
+    }
+  };
 
   constructor(private route: ActivatedRoute, public formUtils: FormUtils) { }
 
@@ -134,6 +172,42 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     this.send(value ? 'spectate' : 0);
   }
 
+  get pointDistributionChartData(): number[] {
+    const pointValueCounts = this.getPointValueCountObject();
+    let data: number[] = [];
+    for (const pointValue in pointValueCounts) {
+      if (pointValueCounts.hasOwnProperty(pointValue)) {
+        data.push(pointValueCounts[pointValue]);
+      }
+    }
+    if (Object.keys(pointValueCounts).length == 1 && !this.confettiShot) {
+      createConfettiCanvas({
+        shapes: ['square'],
+        particleCount: 100,
+        spread: 70,
+        angle: 42,
+      });
+    this.confettiShot = true;
+  }
+    
+    return data;
+  }
+
+  get pointDistributionChartLabels(): Label[] {
+    const pointValueCounts = this.getPointValueCountObject();
+    let data: string[] = [];
+    for (const pointValue in pointValueCounts) {
+      if (pointValueCounts.hasOwnProperty(pointValue)) {
+        data.push(pointValue);
+      }
+    }
+    return data;
+  }
+
+  get showChart(): boolean {
+    return this.showValues && Object.keys(this.pointValues).length > 0;
+  }
+
   private handleSocketUpdates(res: Message): void {
     if (res && res.sender !== 'NS') {
       switch (res.type) {
@@ -141,9 +215,15 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
           delete this.pointValues[res.sender];
           break;
         case 'points':
+          if (this.showChart) {
+            this.confettiShot = true;
+          }
           this.pointValues[res.sender] = res.content;
           if (res.sender === this.name && res.content === undefined) {
             this.selectedPointValue = 0;
+            if (!this.showChart) {
+              this.confettiShot = false
+            }
           }
           break;
         case 'chat':
@@ -199,78 +279,21 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     this.form.setValue({ storyDescription: description });
   }
 
-  scrollToBottom(): void {
+  public scrollToBottom(): void {
     try {
       this.scroller.nativeElement.scrollTop = this.scroller.nativeElement.scrollHeight;
     } catch (err) { }
-  }
-
-  public pointDistributionChartOptions: ChartOptions = {
-    responsive: true,
-    legend: {
-      position: 'top',
-      labels: {
-        fontColor: '#fff',
-        fontSize: 16,
-      },
-    },
-    plugins: {
-      datalabels: {
-        color: '#fff',
-        font: {
-          size: 20,
-        },
-        formatter: (value, ctx) => {
-          const label = ctx.chart.data.labels[ctx.dataIndex];
-          return label;
-        },
-      },
-    }
-  };
-
-  get showChart(): boolean {
-    return this.showValues && Object.keys(this.pointValues).length > 0;
   }
 
   private getPointValueCountObject() {
     let pointValueCounts = {};
     let point: number;
     for (const user in this.pointValues) {
-      if (this.pointValues.hasOwnProperty(user) && this.pointValues[user] !== 'disconnect') {
+      if (this.pointValues.hasOwnProperty(user) && this.pointValues[user] !== 'disconnect' &&  this.pointValues[user]) {
         point = this.pointValues[user]
         pointValueCounts[point] = pointValueCounts[point] ? pointValueCounts[point] + 1 : 1;
       }
     }
     return pointValueCounts;
   }
-
-  public pieChartPlugins = [pluginDataLabels];
-
-  get pointDistributionChartData(): number[] {
-    const pointValueCounts = this.getPointValueCountObject();
-    let data: number[] = [];
-    for (const pointValue in pointValueCounts) {
-      if (pointValueCounts.hasOwnProperty(pointValue)) {
-        data.push(pointValueCounts[pointValue]);
-      }
-    }
-    return data;
-  };
-  get pointDistributionChartLabels(): Label[] {
-    const pointValueCounts = this.getPointValueCountObject();
-    let data: string[] = [];
-    for (const pointValue in pointValueCounts) {
-      if (pointValueCounts.hasOwnProperty(pointValue)) {
-        data.push(pointValue);
-      }
-    }
-    return data;
-  }
-  public pointDistributionChartType: ChartType = 'pie';
-  public showLegend = true;
-  public pieChartColors = [
-    {
-      backgroundColor: ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0'],
-    },
-  ];
 }
