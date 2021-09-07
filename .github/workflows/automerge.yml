@@ -18,3 +18,5 @@ jobs:
     steps:
       - name: Dependabot Auto Merge
         uses: ahmadnassri/action-dependabot-auto-merge@v2.3.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
