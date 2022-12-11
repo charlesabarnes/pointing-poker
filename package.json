@@ -41,7 +41,7 @@
     "chomsky": "^3.3.0",
     "core-js": "^2.5.4",
     "date-fns": "^2.2.1",
-    "express": "^4.15.2",
+    "express": "^4.17.3",
     "ng2-charts": "^2.2.5",
     "ngx-clipboard": "^12.2.1",
     "novo-elements": "^3.12.1",
