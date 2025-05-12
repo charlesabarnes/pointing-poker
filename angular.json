@@ -27,8 +27,7 @@
               "node_modules/bullhorn-icons/fonts/Bullhorn-Glyphicons.css",
               "node_modules/roboto-fontface/css/roboto/roboto-fontface.css"
             ],
-            "scripts": [],
-            "es5BrowserSupport": true
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -41,7 +40,6 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
@@ -60,18 +58,18 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "pointing-poker:build"
+            "buildTarget": "pointing-poker:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "pointing-poker:build:production"
+              "buildTarget": "pointing-poker:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "pointing-poker:build"
+            "buildTarget": "pointing-poker:build"
           }
         },
         "test": {
@@ -152,7 +150,6 @@
       }
     }
   },
-  "defaultProject": "pointing-poker",
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "app",
@@ -161,5 +158,8 @@
     "@schematics/angular:directive": {
       "prefix": "app"
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

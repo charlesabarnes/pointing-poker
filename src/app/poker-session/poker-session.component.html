@@ -28,9 +28,17 @@
       </div>
       <div style="width: 50%;display: inline-block;min-height: 460px;">
         <div>
-          <canvas *ngIf="showChart" baseChart [data]="pointDistributionChartData"
-            [labels]="pointDistributionChartLabels" [options]="pointDistributionChartOptions" [colors]="pieChartColors"
-            [legend]="showLegend" [chartType]="pointDistributionChartType" [plugins]="pieChartPlugins">
+          <canvas *ngIf="showChart" baseChart
+            [data]="{
+              labels: pointDistributionChartLabels,
+              datasets: [{
+                data: pointDistributionChartData,
+                backgroundColor: ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0']
+              }]
+            }"
+            [options]="pointDistributionChartOptions"
+            [type]="pointDistributionChartType"
+            [plugins]="pieChartPlugins">
           </canvas>
         </div>
       </div>

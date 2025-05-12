@@ -28,6 +28,11 @@ module.exports = {
         test: /(\\|\/)@angular(\\|\/)core(\\|\/).+\.js$/,
         parser: { system: true },
       },
+      {
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto'
+      }
     ]
   },
   plugins: [

@@ -17,6 +17,12 @@ There are many ways to contribute to pointing-poker.
 
 ![big screenshot](https://i.imgur.com/xs7PhY0.png "Screenshot")
 
+## Technical Stack
+
+* Built with **Angular 17.3.12**
+* Uses **novo-elements 10.14.0** UI library
+* Node.js 18.3.0 or higher required
+
 ## How to run Pointing Poker
 
 * **Heroku**
@@ -27,9 +33,13 @@ There are many ways to contribute to pointing-poker.
 
 1. Clone the repository
 2. cd into the directory
-3. run `npm run build`
+3. Build the application using one of these methods:
+   - Modern build (recommended): `npm run build:modern`
+   - Legacy build: `NODE_OPTIONS=--openssl-legacy-provider npm run build`
 4. run `node dist/server` (a node process manager such as PM2 could be used for this)
 5. The app should now be running by default on port 4000
+
+**Note**: The server-side build still requires the Node.js legacy OpenSSL provider due to webpack, but the client-side build can now run with modern Node.js crypto.
 
 ## Questions, Concerns, and Feature Request
 

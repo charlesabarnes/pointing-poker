@@ -2,8 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@ang
 import { ActivatedRoute } from '@angular/router';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { NovoFormGroup, TextBoxControl, FormUtils, FieldInteractionApi } from 'novo-elements';
-import { ChartOptions, ChartType } from 'chart.js';
-import { Label } from 'ng2-charts';
+import { ChartOptions, ChartType, ChartData } from 'chart.js';
 import * as pluginDataLabels from 'chartjs-plugin-datalabels';
 import confetti, { create } from 'canvas-confetti';
 
@@ -77,28 +76,25 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
       disabled: true
     },
   ];
-  @ViewChild('scroller') private scroller: ElementRef;
+  @ViewChild('scroller', { static: false }) private scroller: ElementRef;
   public pieChartPlugins = [pluginDataLabels];
 
   public pointDistributionChartType: ChartType = 'pie';
-  public showLegend = true;
-  public pieChartColors = [
-    {
-      backgroundColor: ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0'],
-    },
-  ];
+  // Colors are now defined directly in the template
   private confettiShot: boolean = false;
   
   public pointDistributionChartOptions: ChartOptions = {
     responsive: true,
-    legend: {
-      position: 'top',
-      labels: {
-        fontColor: '#fff',
-        fontSize: 16,
-      },
-    },
     plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          color: '#fff',
+          font: {
+            size: 16
+          }
+        }
+      },
       datalabels: {
         color: '#fff',
         font: {
@@ -193,7 +189,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     return data;
   }
 
-  get pointDistributionChartLabels(): Label[] {
+  get pointDistributionChartLabels(): string[] {
     const pointValueCounts = this.getPointValueCountObject();
     let data: string[] = [];
     for (const pointValue in pointValueCounts) {
