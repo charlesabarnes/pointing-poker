@@ -1,197 +1,208 @@
-import 'zone.js/dist/zone-node';
-import {enableProdMode} from '@angular/core';
-// Express Engine
-import { AppServerModule } from './src/app/app.server.module';
-import { readFileSync } from 'fs';
-(global as any).XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
-
+import express from 'express';
 import * as http from 'http';
-import * as express from 'express';
 import * as WebSocket from 'ws';
-import {join} from 'path';
-import { disconnect } from 'cluster';
-
-// Faster server renders w/ Prod mode (dev mode never needed)
-enableProdMode();
+import { join } from 'path';
 
 // Express server
 const app = express();
-
 const PORT: string | number = process.env.PORT || 4000;
 const DIST_FOLDER: string = join(process.cwd(), 'dist/browser');
 
-// Import the SSR functions from @angular/platform-server
-import { renderModule } from '@angular/platform-server';
-
-// Serve static files from /browser
-app.get('*.*', express.static(DIST_FOLDER, {
-  maxAge: '1y'
-}));
-
-// All regular routes use the Universal engine
-app.get('*', (req: any, res: any) => {
-  const indexHtml = readFileSync(join(DIST_FOLDER, 'index.html')).toString();
-
-  renderModule(AppServerModule, {
-    document: indexHtml,
-    url: req.url
-  }).then(html => {
-    res.send(html);
-  }).catch(err => {
-    console.error('Error rendering app:', err);
-    res.status(500).send('Server error');
-  });
-});
-
-// initialize the WebSocket server instance
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-
+// Define WebSocket extension interface
 interface ExtWebSocket extends WebSocket {
   isAlive: boolean;
   session?: string;
   name?: string;
-  content?: string;
+  content?: string | number;
 }
 
+// Message class for TypeScript
 export class Message {
+  public content: string | number;
+  public sender: string;
+  public type: 'chat' | 'points' | 'action' | 'disconnect' | 'description' | 'heartbeat' | 'join';
+  public timestamp: number;
+
   constructor(
-      public content: string,
-      public sender: string,
-      public type: 'chat' | 'points' | 'action' |'disconnect' | 'description',
-  ) { }
-}
-
-function createMessage(content: string, sender = 'NS', type: 'chat' | 'points' | 'action' |'disconnect' | 'description'): string {
-  return JSON.stringify(new Message(content, sender, type));
-}
-
-const connections: any = {};
-
-wss.on('connection', (ws: WebSocket, req: any) => {
-  // TypeScript fix for req.url
-  if (!req.url) {
-    req.url = '/';
+    content: string | number,
+    sender: string,
+    type: 'chat' | 'points' | 'action' | 'disconnect' | 'description' | 'heartbeat' | 'join',
+    timestamp?: number
+  ) {
+    this.content = content;
+    this.sender = sender;
+    this.type = type;
+    this.timestamp = timestamp || Date.now();
   }
+}
 
+// Serve static files from /browser
+app.use(express.static(DIST_FOLDER, {
+  maxAge: '1y'
+}));
+
+// All regular routes use the index.html
+app.get('*', (req: express.Request, res: express.Response) => {
+  res.sendFile(join(DIST_FOLDER, 'index.html'));
+});
+
+// Create message helper
+function createMessage(
+  content: string | number,
+  sender: string = 'NS',
+  type: 'chat' | 'points' | 'action' | 'disconnect' | 'description' | 'heartbeat' | 'join',
+  timestamp?: number
+): string {
+  return JSON.stringify(new Message(content, sender, type, timestamp));
+}
+
+// Initialize WebSocket server
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// Handle WebSocket connections
+wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
+  // TypeScript fix for req.url
+  const url: string = req.url || '/';
+  
+  // Cast to our extended WebSocket
   const extWs = ws as ExtWebSocket;
-  extWs.session = req.url.replace('/?session=', '');
-
-
   extWs.isAlive = true;
+  extWs.session = url.replace('/?session=', '');
 
-  wss.clients
-    .forEach((client: any) => {
-      if (client.session === extWs.session) {
-        ws.send(createMessage(client.content, client.name, 'points'));
+  // Send existing point values to new connection
+  wss.clients.forEach((client: WebSocket) => {
+    const extClient = client as ExtWebSocket;
+    if (extClient.session === extWs.session) {
+      ws.send(createMessage(extClient.content, extClient.name, 'points'));
+    }
+  });
+
+  // Handle pong response
+  ws.on('pong', () => {
+    extWs.isAlive = true;
+  });
+
+  // Handle messages
+  ws.on('message', (msg: string) => {
+    const message = JSON.parse(msg) as Message;
+    extWs.name = message.sender;
+
+    switch (message.type) {
+      case 'chat':
+        setTimeout(() => {
+          wss.clients.forEach((client: WebSocket) => {
+            const extClient = client as ExtWebSocket;
+            if (extClient.session === extWs.session) {
+              client.send(createMessage(message.content, message.sender, 'chat', message.timestamp));
+            }
+          });
+        }, 100);
+        break;
+
+      case 'description':
+        setTimeout(() => {
+          wss.clients.forEach((client: WebSocket) => {
+            const extClient = client as ExtWebSocket;
+            if (extClient.session === extWs.session) {
+              client.send(createMessage(message.content, message.sender, 'description', message.timestamp));
+            }
+          });
+        }, 100);
+        break;
+
+      case 'heartbeat':
+        // Just mark client as active, no need to broadcast
+        extWs.isAlive = true;
+        break;
+
+      case 'join':
+        // Broadcast join message to all clients in the session
+        setTimeout(() => {
+          wss.clients.forEach((client: WebSocket) => {
+            const extClient = client as ExtWebSocket;
+            if (extClient.session === extWs.session) {
+              client.send(createMessage(message.content, message.sender, 'join', message.timestamp));
+            }
+          });
+        }, 100);
+        break;
+
+      case 'points':
+        if (message.content === 'ClearVotes') {
+          wss.clients.forEach((client: WebSocket) => {
+            const extClient = client as ExtWebSocket;
+            if (extClient.session === extWs.session) {
+              wss.clients.forEach((connectedClient: WebSocket) => {
+                const extConnectedClient = connectedClient as ExtWebSocket;
+                if (extClient.session === extConnectedClient.session && 
+                    extConnectedClient.content !== 'disconnect') {
+                  extConnectedClient.content = undefined;
+                  client.send(createMessage(undefined, extConnectedClient.name, 'points'));
+                }
+              });
+            }
+          });
+        } else if (message.content === 'spectate') {
+          wss.clients.forEach((client: WebSocket) => {
+            const extClient = client as ExtWebSocket;
+            if (extClient.session === extWs.session) {
+              client.send(createMessage('disconnect', extWs.name, 'disconnect'));
+              extWs.content = 'disconnect';
+            }
+          });
+        } else {
+          extWs.content = message.content;
+          setTimeout(() => {
+            wss.clients.forEach((client: WebSocket) => {
+              const extClient = client as ExtWebSocket;
+              if (extClient.session === extWs.session) {
+                client.send(createMessage(message.content, message.sender, 'points', message.timestamp));
+              }
+            });
+          }, 100);
+        }
+        break;
+        
+      default:
+        break;
+    }
+  });
+
+  // Handle errors
+  ws.on('error', () => {
+    wss.clients.forEach((client: WebSocket) => {
+      const extClient = client as ExtWebSocket;
+      if (extClient.session === extWs.session && ws !== client) {
+        client.send(createMessage('disconnect', extWs.name, 'disconnect'));
       }
     });
-  ws.on('pong', () => {
-      extWs.isAlive = true;
-  });
-
-  // connection is up, let's add a simple simple event
-  ws.on('message', (msg: string) => {
-
-      const message = JSON.parse(msg) as Message;
-
-      extWs.name = message.sender;
-
-      switch (message.type) {
-        case 'chat':
-          setTimeout(() => {
-            wss.clients
-              .forEach((client: any) => {
-                if (client.session === extWs.session) {
-                  client.send(createMessage(message.content, message.sender, 'chat'));
-                }
-              });
-
-          }, 100);
-          break;
-        case 'description':
-          setTimeout(() => {
-            wss.clients
-              .forEach((client: any) => {
-                if (client.session === extWs.session) {
-                  client.send(createMessage(message.content, message.sender, 'description'));
-                }
-              });
-
-          }, 100);
-          break;
-        case 'points':
-          if (message.content === 'ClearVotes') {
-            wss.clients
-              .forEach((client: any) => {
-                if (client.session === extWs.session) {
-                  wss.clients
-                    .forEach((connectedClient: any) => {
-                      if (client.session === connectedClient.session && connectedClient.content !== 'disconnect') {
-                        connectedClient.content = undefined;
-                        client.send(createMessage(undefined, connectedClient.name, 'points'));
-                      }
-                    });
-                }
-              });
-          } else if (message.content === 'spectate') {
-            wss.clients
-              .forEach((client: any) => {
-                if (client.session === extWs.session) {
-                  client.send(createMessage('disconnect', extWs.name, 'disconnect'));
-                  extWs.content = 'disconnect';
-                }
-              });
-          } else {
-            extWs.content = message.content;
-            setTimeout(() => {
-              wss.clients
-                .forEach((client: any) => {
-                  if (client.session === extWs.session) {
-                    client.send(createMessage(message.content, message.sender, 'points'));
-                  }
-                });
-
-            }, 100);
-          }
-          break;
-        default:
-          break;
-      }
-
-
-
-  });
-
-  ws.on('error', (err) => {
-    wss.clients
-      .forEach((client: any) => {
-        if (client.session === extWs.session && ws !== client) {
-          client.send(createMessage('disconnect', extWs.name, 'disconnect'));
-        }
-      });
   });
 });
 
+// Check connections every 10 seconds
 setInterval(() => {
   wss.clients.forEach((ws: WebSocket) => {
-      const extWs = ws as ExtWebSocket;
-      if (!extWs.isAlive) {
-        wss.clients
-          .forEach((client: any) => {
-            if (client.session === extWs.session && ws !== client) {
-              client.send(createMessage('disconnect', extWs.name, 'disconnect'));
-            }
-          });
-        console.log('client Disconnected');
-        return ws.terminate();
-      }
+    const extWs = ws as ExtWebSocket;
+    
+    if (!extWs.isAlive) {
+      wss.clients.forEach((client: WebSocket) => {
+        const extClient = client as ExtWebSocket;
+        if (extClient.session === extWs.session && ws !== client) {
+          client.send(createMessage('disconnect', extWs.name, 'disconnect'));
+        }
+      });
+      
+      console.log('client Disconnected');
+      return ws.terminate();
+    }
 
-      extWs.isAlive = false;
-      ws.ping(null, undefined);
+    extWs.isAlive = false;
+    ws.ping();
   });
 }, 10000);
 
+// Start the server
 server.listen(PORT, () => {
   console.log(`Node Express server listening on http://localhost:${PORT}`);
 });

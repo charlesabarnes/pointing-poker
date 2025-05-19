@@ -1,94 +1,166 @@
-<div>
+<div class="poker-session-container">
 
   <div class="top-card">
-    <novo-card>
-      <div style="width: 50%;display: inline-block;">
-        <novo-form [form]="form" *ngIf="form">
-          <div class="novo-form-row">
-            <novo-control [form]="form" [control]="nameControl"></novo-control>
+    <novo-card class="main-session-card">
+      <header>
+        <novo-title>Planning Poker Session</novo-title>
+      </header>
+
+      <div class="main-content">
+        <div class="left-panel">
+          <div class="story-section">
+            <h3><i class="bhi-note"></i> Story Description</h3>
+            <novo-form [form]="form" *ngIf="form">
+              <div class="novo-form-row">
+                <novo-control [form]="form" [control]="nameControl"></novo-control>
+              </div>
+            </novo-form>
           </div>
-        </novo-form>
-        <div class="action-buttons">
-          <button theme="primary" color="negative" icon="times" (click)="clearVotes()">Clear Votes</button>
-          <button theme="primary" icon="search" (click)="doShowValues()">Show Votes</button>
+
+          <div class="action-buttons">
+            <button theme="primary" color="negative" icon="times" (click)="clearVotes()">Clear Votes</button>
+            <button theme="primary" icon="search" (click)="doShowValues()">Show Votes</button>
+          </div>
+
+          <div *ngIf="!spectator" class="point-value-container">
+            <h3><i class="bhi-flag"></i> Select Point Value</h3>
+            <novo-tiles [options]="options" (onChange)="send($event)" [(ngModel)]="selectedPointValue"></novo-tiles>
+          </div>
+
+          <div class="point-value-container spectator-container">
+            <h3><i class="bhi-eye"></i> Participant Mode</h3>
+            <div class="spectator-toggle">
+              <span [ngClass]="{'active': !spectator}">Voter</span>
+              <novo-switch [(ngModel)]="spectator"></novo-switch>
+              <span [ngClass]="{'active': spectator}">Spectator</span>
+            </div>
+          </div>
         </div>
 
-        <div *ngIf="!spectator" class="point-value-container">
-          <h3>Select Point Value</h3>
-          <novo-tiles [options]="options" (onChange)="send($event)" [(ngModel)]="selectedPointValue"></novo-tiles>
-        </div>
-
-        <div class="point-value-container">
-          <h3>Spectator switch</h3>
-          <div>
-            <span>Spectate</span>
-            <novo-switch [(ngModel)]="spectator"></novo-switch>
+        <div class="right-panel">
+          <div class="chart-container">
+            <div *ngIf="!showChart" class="waiting-for-votes">
+              <i class="bhi-clock"></i>
+              <h3>Waiting for votes...</h3>
+              <p>Point values will appear here once everyone has voted.</p>
+            </div>
+            <canvas *ngIf="showChart" baseChart
+              [data]="{
+                labels: pointDistributionChartLabels,
+                datasets: [{
+                  data: pointDistributionChartData,
+                  backgroundColor: ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0']
+                }]
+              }"
+              [options]="pointDistributionChartOptions"
+              [type]="pointDistributionChartType"
+              [plugins]="pieChartPlugins">
+            </canvas>
           </div>
         </div>
       </div>
-      <div style="width: 50%;display: inline-block;min-height: 460px;">
-        <div>
-          <canvas *ngIf="showChart" baseChart
-            [data]="{
-              labels: pointDistributionChartLabels,
-              datasets: [{
-                data: pointDistributionChartData,
-                backgroundColor: ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0']
-              }]
-            }"
-            [options]="pointDistributionChartOptions"
-            [type]="pointDistributionChartType"
-            [plugins]="pieChartPlugins">
-          </canvas>
-        </div>
-      </div>
-
     </novo-card>
   </div>
 
 
   <div class="mid-cards">
-    <novo-card>
-      If there is a problem, try refreshing the browser. <br>
-      If it still persists make an issue on <a
-        href="https://github.com/charlesabarnes/pointing-poker">https://github.com/charlesabarnes/pointing-poker</a>
+    <novo-card class="participants-card">
+      <header>
+        <novo-title><i class="bhi-person"></i> Participants</novo-title>
+      </header>
+
+      <!-- User join notification -->
+      <div *ngIf="newUserJoined" class="user-joined-notification">
+        <i class="bhi-add-user"></i>
+        <span>{{ recentJoinedUser }} has joined the session</span>
+      </div>
+
       <div class="point-list">
-        <div class="user-info">
+        <div class="user-info user-info-header">
           <div class="player-name">
             <h3>Player</h3>
+          </div>
+          <div class="status-indicator">
+            <h3>Status</h3>
           </div>
           <div class="point-value">
             <h3>Points</h3>
           </div>
         </div>
         <ng-container *ngFor="let userName of userNames">
-          <div class="user-info" *ngIf="pointValues[userName] !== 'disconnect'">
+          <div class="user-info" *ngIf="pointValues[userName] !== 'disconnect'"
+               [ngClass]="{'current-user': userName == name}">
             <div class="player-name">
-              <span [ngStyle]="{'font-weight': userName == name ? '900' : '300'}">{{userName}}</span>
+              <span>{{userName}}</span>
+              <i *ngIf="userName == name" class="bhi-user" title="You"></i>
+            </div>
+            <div class="status-indicator">
+              <span class="status-dot"
+                [ngClass]="{
+                  'status-online': userActivity[userName]?.status === 'online',
+                  'status-away': userActivity[userName]?.status === 'away',
+                  'status-offline': userActivity[userName]?.status === 'offline' || !userActivity[userName]
+                }"
+                [title]="userActivity[userName]?.status || 'offline'">
+              </span>
+              <span class="status-text">{{ userActivity[userName]?.status || 'offline' }}</span>
             </div>
             <div class="point-value">
-              <span *ngIf="showValues">{{pointValues[userName]}}</span><i *ngIf="!showValues" class="bhi-circle"
-                [ngStyle]="{'color': pointValues[userName] ? '#8CC152' : '#DA4453'}"></i>
+              <span *ngIf="showValues" class="vote-value">{{pointValues[userName]}}</span>
+              <div *ngIf="!showValues" class="vote-status">
+                <i class="bhi-circle"
+                  [ngClass]="{
+                    'has-voted': pointValues[userName],
+                    'no-vote': !pointValues[userName]
+                  }">
+                </i>
+                <span>{{ pointValues[userName] ? 'Voted' : 'Not voted' }}</span>
+              </div>
             </div>
           </div>
         </ng-container>
       </div>
+
+      <footer class="card-footer">
+        <div class="help-text">
+          <i class="bhi-help-o"></i>
+          <span>If you experience issues, refresh the browser or <a href="https://github.com/charlesabarnes/pointing-poker" target="_blank">report it on GitHub</a></span>
+        </div>
+      </footer>
     </novo-card>
-    <novo-card>
-      <div class="tip">
-        Chat
-      </div>
+
+    <novo-card class="chat-card">
+      <header>
+        <novo-title><i class="bhi-chat"></i> Team Chat</novo-title>
+      </header>
+
       <div class="chat">
         <div #scroller class="chat-box">
-          <div *ngFor="let chat of chatLog" class="chat-row">
-            <span class="name">{{ chat.sender }}</span><span class="text">{{ chat.content }}</span>
+          <div *ngFor="let chat of chatLog"
+               [ngClass]="{
+                 'chat-row': chat.type === 'chat',
+                 'system-message': chat.type === 'join'
+               }">
+            <ng-container *ngIf="chat.type === 'chat'">
+              <span class="name">{{ chat.sender }}</span>
+              <span class="text">{{ chat.content }}</span>
+              <span class="timestamp" title="{{chat.timestamp | date:'medium'}}">{{ chat.timestamp | date:'shortTime' }}</span>
+            </ng-container>
+            <ng-container *ngIf="chat.type === 'join'">
+              <i class="bhi-add-user"></i>
+              <span class="system-text">{{ chat.sender }} {{ chat.content }}</span>
+            </ng-container>
           </div>
         </div>
-        <novo-form #chatFormRef [form]="chatForm" *ngIf="chatForm" (submit)="sendChat()" autocomplete="off">
-          <div class="novo-form-row">
-            <novo-control [form]="chatForm" [control]="messageControl"></novo-control>
-          </div>
-        </novo-form>
+
+        <div class="chat-input">
+          <novo-form #chatFormRef [form]="chatForm" *ngIf="chatForm" (submit)="sendChat()" autocomplete="off">
+            <div class="novo-form-row">
+              <novo-control [form]="chatForm" [control]="messageControl"></novo-control>
+            </div>
+          </novo-form>
+          <button theme="primary" icon="send" (click)="sendChat()" [disabled]="!chatForm.valid" class="send-button">Send</button>
+        </div>
       </div>
     </novo-card>
   </div>

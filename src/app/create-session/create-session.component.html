@@ -1,13 +1,29 @@
-<novo-modal>
-  <header class="apply-modal-header" title="Please update your name" theme="neutral" >
+<novo-modal class="onboarding-modal">
+  <header class="apply-modal-header" title="Welcome to Pointing Poker" theme="primary">
+    <utils>
+      <novo-title>Get started with your session</novo-title>
+    </utils>
   </header>
   <section>
-    <novo-form [form]="form" *ngIf="form" (submit)="save()">
-      <div class="novo-form-row">
+    <div class="modal-content">
+      <p class="intro-text">Enter your name to join or create a planning poker session. Your name will be visible to all participants.</p>
+
+      <novo-form [form]="form" *ngIf="form" (submit)="save()">
+        <div class="novo-form-row">
           <novo-control [form]="form" [control]="nameControl"></novo-control>
         </div>
-    </novo-form>
+      </novo-form>
 
+      <div class="tips">
+        <h4><i class="bhi-info"></i> Quick Tips:</h4>
+        <ul>
+          <li>Share the session link with your team to invite them</li>
+          <li>Use the story description field to describe what you're estimating</li>
+          <li>You can toggle between participant and spectator mode</li>
+        </ul>
+      </div>
+    </div>
   </section>
-  <button theme="primary" icon="check" (click)="save()" data-automation-id="create-modal-save" [disabled]="!form.valid">Join Session</button>
+  <button theme="standard" (click)="close()" data-automation-id="create-modal-cancel">Cancel</button>
+  <button theme="primary" icon="check" (click)="save()" data-automation-id="create-modal-save" [disabled]="!form.valid">Continue</button>
 </novo-modal>

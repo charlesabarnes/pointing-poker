@@ -1,17 +1,94 @@
 :host {
-  section {
-    height: calc(100vh - 55px);
+  .welcome-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 55px);
     width: 100%;
-    div {
-      position: absolute;
-      margin: auto;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+    padding: 2rem;
+  }
+
+  .welcome-card {
+    max-width: 800px;
+    width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+    header {
+      padding: 1.5rem;
+      background-color: #4A89DC;
+      color: white;
+
+      novo-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .welcome-content {
+    padding: 2rem;
+
+    > p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      color: #666;
+      text-align: center;
+    }
+  }
+
+  .features-list {
+    margin: 2rem 0;
+
+    .feature-item {
       display: flex;
-      justify-content: center;
       align-items: center;
+      margin-bottom: 1rem;
+
+      i {
+        color: #8CC152;
+        margin-right: 0.75rem;
+        font-size: 1.2rem;
+      }
+
+      span {
+        font-size: 1.1rem;
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2rem;
+
+    button {
+      padding: 0.75rem 1.5rem;
+      font-size: 1.1rem;
+    }
+
+    .join-text {
+      margin-top: 1rem;
+      color: #777;
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .welcome-container {
+      padding: 1rem;
+    }
+
+    .welcome-content {
+      padding: 1.5rem;
+
+      > p {
+        font-size: 1rem;
+      }
+    }
+
+    .features-list .feature-item span {
+      font-size: 1rem;
     }
   }
 }

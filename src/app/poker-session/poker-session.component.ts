@@ -11,8 +11,11 @@ export class Message {
     public sender: string,
     public content: string | number,
     public session: string,
-    public type: 'chat' | 'points' | 'action' | 'disconnect' | 'description',
-  ) { }
+    public type: 'chat' | 'points' | 'action' | 'disconnect' | 'description' | 'heartbeat' | 'join',
+    public timestamp?: number
+  ) {
+    this.timestamp = this.timestamp || Date.now();
+  }
 }
 
 // TODO: clean confetti logic
@@ -37,6 +40,13 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public messageControl: TextBoxControl;
   public _showValues: boolean = false; // tslint:disable-line
   public _spectator: boolean = false; // tslint:disable-line
+  public userActivity: {[key: string]: {lastActive: number, status: 'online' | 'away' | 'offline'}} = {};
+  public activityInterval: any;
+  public heartbeatInterval: any;
+  public newUserJoined: boolean = false;
+  public recentJoinedUser: string = '';
+  public OFFLINE_THRESHOLD = 60000; // 1 minute with no activity = offline
+  public AWAY_THRESHOLD = 30000; // 30 seconds with no activity = away
   public options: any[] = [
     {
       label: '.5',
@@ -117,12 +127,54 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
       this.webSocket.subscribe(this.handleSocketUpdates.bind(this));
       this.createForm();
       this.createChatForm();
+      this.setupHeartbeat();
+      this.setupActivityMonitor();
+
+      // Announce this user has joined
+      setTimeout(() => {
+        this.send('has joined the session', 'join');
+      }, 1000);
     }
+  }
+
+  private setupHeartbeat() {
+    // Send heartbeat every 15 seconds
+    this.heartbeatInterval = setInterval(() => {
+      this.send('', 'heartbeat');
+    }, 15000);
+  }
+
+  private setupActivityMonitor() {
+    // Check user activity status every 10 seconds
+    this.activityInterval = setInterval(() => {
+      const currentTime = Date.now();
+
+      Object.keys(this.userActivity).forEach(user => {
+        const lastActive = this.userActivity[user].lastActive;
+        const timeSinceActive = currentTime - lastActive;
+
+        if (timeSinceActive > this.OFFLINE_THRESHOLD) {
+          this.userActivity[user].status = 'offline';
+        } else if (timeSinceActive > this.AWAY_THRESHOLD) {
+          this.userActivity[user].status = 'away';
+        }
+      });
+    }, 10000);
   }
 
   public ngAfterViewChecked() {
     this.scrollToBottom();
     document.querySelector('.chat .novo-form').setAttribute('autocomplete', 'off');
+  }
+
+  public ngOnDestroy() {
+    // Clear intervals when component is destroyed
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+    if (this.activityInterval) {
+      clearInterval(this.activityInterval);
+    }
   }
 
   get webSocket(): WebSocketSubject<any> {
@@ -206,9 +258,23 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
 
   private handleSocketUpdates(res: Message): void {
     if (res && res.sender !== 'NS') {
+      // Update user activity on any message received
+      if (!this.userActivity[res.sender]) {
+        this.userActivity[res.sender] = {
+          lastActive: res.timestamp || Date.now(),
+          status: 'online'
+        };
+      } else {
+        this.userActivity[res.sender].lastActive = res.timestamp || Date.now();
+        this.userActivity[res.sender].status = 'online';
+      }
+
       switch (res.type) {
         case 'disconnect':
           delete this.pointValues[res.sender];
+          if (this.userActivity[res.sender]) {
+            this.userActivity[res.sender].status = 'offline';
+          }
           break;
         case 'points':
           if (this.showChart) {
@@ -227,6 +293,23 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
           break;
         case 'description':
           this.updateDescription(res.content);
+          break;
+        case 'heartbeat':
+          // Just update the user's activity status
+          break;
+        case 'join':
+          // Add to chat log as a system message
+          this.chatLog.push(res);
+          // Set a flag to show notification
+          if (res.sender !== this.name) {
+            this.newUserJoined = true;
+            this.recentJoinedUser = res.sender;
+            // Auto-clear after 5 seconds
+            setTimeout(() => {
+              this.newUserJoined = false;
+              this.recentJoinedUser = '';
+            }, 5000);
+          }
           break;
         default:
           break;

@@ -10,7 +10,14 @@ module.exports = {
     server: './server.ts'
   },
   target: 'node',
-  resolve: { extensions: ['.ts', '.js'] },
+  resolve: {
+    extensions: ['.ts', '.js', '.mjs', '.json']
+  },
+  node: {
+    fs: 'empty',
+    path: 'empty',
+    url: 'empty'
+  },
   optimization: {
     minimize: false
   },
@@ -21,7 +28,14 @@ module.exports = {
   },
   module: {
     rules: [
-      { test: /\.ts$/, loader: 'ts-loader' },
+      {
+        test: /\.ts$/,
+        loader: 'ts-loader',
+        options: {
+          configFile: 'tsconfig.server.json',
+          transpileOnly: true
+        }
+      },
       {
         // Mark files inside `@angular/core` as using SystemJS style dynamic imports.
         // Removing this will cause deprecation warnings to appear.
@@ -32,6 +46,16 @@ module.exports = {
         test: /\.mjs$/,
         include: /node_modules/,
         type: 'javascript/auto'
+      },
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env']
+          }
+        }
       }
     ]
   },
