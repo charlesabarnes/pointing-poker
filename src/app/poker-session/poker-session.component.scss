@@ -15,8 +15,8 @@
       
       header {
         padding: 15px 20px;
-        background-color: #2C3E50;
-        color: white;
+        background-color: #f0f0f0;
+        color: #2C3E50;
         
         novo-title {
           font-size: 1.4rem;
@@ -167,8 +167,8 @@
       
       header {
         padding: 15px 20px;
-        background-color: #2C3E50;
-        color: white;
+        background-color: #f0f0f0;
+        color: #2C3E50;
         
         novo-title {
           font-size: 1.2rem;
@@ -339,8 +339,8 @@
     }
     
     .user-joined-notification {
-      background-color: #2C3E50;
-      color: white;
+      background-color: #EBF5FB;
+      color: #2C3E50;
       padding: 10px 15px;
       border-radius: 4px;
       margin: 10px 0;
@@ -350,6 +350,7 @@
       i {
         margin-right: 10px;
         font-size: 1.2rem;
+        color: #3498DB;
       }
       
       span {
@@ -447,7 +448,8 @@
         
         .send-button {
           align-self: flex-end;
-          background-color: #2C3E50;
+          background-color: #3498DB;
+          color: white;
         }
       }
     }
