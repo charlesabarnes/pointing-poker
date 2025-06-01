@@ -23,6 +23,39 @@
         color: #555;
         line-height: 1.5;
       }
+      
+      .custom-form {
+        margin-bottom: 1.5rem;
+        
+        .form-group {
+          label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+          }
+          
+          input.form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            color: #333;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            
+            &:focus {
+              outline: none;
+              border-color: #4A89DC;
+              box-shadow: 0 0 0 2px rgba(74, 137, 220, 0.25);
+            }
+            
+            &::placeholder {
+              color: #999;
+            }
+          }
+        }
+      }
 
       .tips {
         margin-top: 2rem;

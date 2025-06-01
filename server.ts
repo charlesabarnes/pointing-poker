@@ -112,8 +112,22 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         break;
 
       case 'heartbeat':
-        // Just mark client as active, no need to broadcast
+        // Mark client as active
         extWs.isAlive = true;
+        console.log(`[Server] Heartbeat received from ${message.sender} in session ${extWs.session}`);
+        
+        // Broadcast heartbeat to all clients in the session so they know this user is still active
+        setTimeout(() => {
+          let broadcastCount = 0;
+          wss.clients.forEach((client: WebSocket) => {
+            const extClient = client as ExtWebSocket;
+            if (extClient.session === extWs.session) {
+              client.send(createMessage('', message.sender, 'heartbeat', message.timestamp));
+              broadcastCount++;
+            }
+          });
+          console.log(`[Server] Heartbeat from ${message.sender} broadcast to ${broadcastCount} clients`);
+        }, 100);
         break;
 
       case 'join':
@@ -182,10 +196,14 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
 
 // Check connections every 10 seconds
 setInterval(() => {
+  console.log(`[Server] Running connection check. Total clients: ${wss.clients.size}`);
+  
   wss.clients.forEach((ws: WebSocket) => {
     const extWs = ws as ExtWebSocket;
     
     if (!extWs.isAlive) {
+      console.log(`[Server] Client ${extWs.name} in session ${extWs.session} failed ping check - disconnecting`);
+      
       wss.clients.forEach((client: WebSocket) => {
         const extClient = client as ExtWebSocket;
         if (extClient.session === extWs.session && ws !== client) {
@@ -197,6 +215,7 @@ setInterval(() => {
       return ws.terminate();
     }
 
+    console.log(`[Server] Pinging client ${extWs.name} in session ${extWs.session}`);
     extWs.isAlive = false;
     ws.ping();
   });

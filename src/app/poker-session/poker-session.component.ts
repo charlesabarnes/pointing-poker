@@ -47,6 +47,9 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public recentJoinedUser: string = '';
   public OFFLINE_THRESHOLD = 60000; // 1 minute with no activity = offline
   public AWAY_THRESHOLD = 30000; // 30 seconds with no activity = away
+  public reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 1000; // Start with 1 second
   public options: any[] = [
     {
       label: '.5',
@@ -124,11 +127,12 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     this.id = this.route.snapshot.paramMap.get('id');
     this.name = sessionStorage.getItem('POKER_NAME');
     if (this.name) {
-      this.webSocket.subscribe(this.handleSocketUpdates.bind(this));
+      this.initializeWebSocket();
       this.createForm();
       this.createChatForm();
       this.setupHeartbeat();
       this.setupActivityMonitor();
+      this.setupFocusListener();
 
       // Announce this user has joined
       setTimeout(() => {
@@ -137,11 +141,168 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     }
   }
 
+  private initializeWebSocket() {
+    console.group('🔌 WebSocket Initialization');
+    console.log('Time:', new Date().toLocaleTimeString());
+    console.log('Session ID:', this.id);
+    console.log('User:', this.name);
+    
+    this.webSocket.subscribe({
+      next: this.handleSocketUpdates.bind(this),
+      error: (error) => {
+        console.group('❌ WebSocket Error');
+        console.error('Error details:', error);
+        console.groupEnd();
+        this.handleDisconnection();
+      },
+      complete: () => {
+        console.group('🔚 WebSocket Closed');
+        console.log('Connection closed by server or network');
+        console.groupEnd();
+        this.handleDisconnection();
+      }
+    });
+    
+    console.log('WebSocket subscribed successfully');
+    console.groupEnd();
+  }
+
+  private handleDisconnection() {
+    console.group('🔌 Handle Disconnection');
+    console.log('Time:', new Date().toLocaleTimeString());
+    
+    // Clear the existing websocket
+    this._webSocket = undefined;
+    console.log('WebSocket cleared');
+    
+    // Clear intervals
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+      console.log('Heartbeat interval cleared');
+    }
+    
+    console.groupEnd();
+    
+    // Attempt reconnection
+    this.attemptReconnection();
+  }
+
+  private attemptReconnection() {
+    console.group('🔄 Reconnection Attempt');
+    console.log('Time:', new Date().toLocaleTimeString());
+    
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.log('❌ Max reconnection attempts reached');
+      console.log('Total attempts:', this.reconnectAttempts);
+      console.groupEnd();
+      
+      // Add a visual indicator for the user
+      this.chatLog.push(new Message(
+        'System',
+        'Connection lost. Please refresh the page.',
+        this.id,
+        'chat'
+      ));
+      return;
+    }
+
+    this.reconnectAttempts++;
+    const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 30000);
+    
+    console.log('Attempt:', `${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+    console.log('Delay:', `${delay}ms`);
+    console.log('Next attempt at:', new Date(Date.now() + delay).toLocaleTimeString());
+    console.groupEnd();
+    
+    setTimeout(() => {
+      console.group('🔄 Executing Reconnection');
+      console.log('Time:', new Date().toLocaleTimeString());
+      console.log('Attempt number:', this.reconnectAttempts);
+      
+      if (!this._webSocket || this._webSocket.closed) {
+        console.log('WebSocket is closed, initializing new connection...');
+        this.initializeWebSocket();
+        
+        // Reinitialize after successful connection
+        this.setupHeartbeat();
+        
+        // Re-announce user presence
+        setTimeout(() => {
+          console.log('📢 Announcing reconnection to session');
+          this.send('has reconnected to the session', 'join');
+          // Resend current vote if any
+          if (this.selectedPointValue !== undefined && this.selectedPointValue !== 0) {
+            console.log('📊 Resending vote:', this.selectedPointValue);
+            this.send(this.selectedPointValue);
+          }
+        }, 500);
+        
+        // Reset reconnect attempts on successful connection
+        this.reconnectAttempts = 0;
+        console.log('✅ Reconnection successful, attempts reset');
+      } else {
+        console.log('WebSocket already connected, skipping reconnection');
+      }
+      
+      console.groupEnd();
+    }, delay);
+  }
+
+  private setupFocusListener() {
+    // Listen for window focus events
+    window.addEventListener('focus', () => {
+      console.group('👁️ Window Focus Event');
+      console.log('Time:', new Date().toLocaleTimeString());
+      
+      // Check if websocket is closed or undefined
+      if (!this._webSocket || this._webSocket.closed) {
+        console.log('Status: Connection lost, initiating reconnection');
+        console.log('WebSocket state:', this._webSocket ? 'exists but closed' : 'undefined');
+        this.reconnectAttempts = 0; // Reset attempts on manual reconnection
+        console.groupEnd();
+        this.attemptReconnection();
+      } else {
+        console.log('Status: Connection active, no action needed');
+        console.groupEnd();
+      }
+    });
+  }
+
   private setupHeartbeat() {
-    // Send heartbeat every 15 seconds
+    // Clear existing interval if any
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+    
+    // Send heartbeat every 8 seconds (server checks every 10 seconds)
     this.heartbeatInterval = setInterval(() => {
-      this.send('', 'heartbeat');
-    }, 15000);
+      console.group('🫀 Heartbeat Check');
+      console.log('Time:', new Date().toLocaleTimeString());
+      
+      if (this._webSocket && !this._webSocket.closed) {
+        console.log('Status: Connection alive, sending heartbeat');
+        this.send('', 'heartbeat');
+        
+        // Also update our own activity status
+        if (!this.userActivity[this.name]) {
+          this.userActivity[this.name] = {
+            lastActive: Date.now(),
+            status: 'online'
+          };
+        } else {
+          this.userActivity[this.name].lastActive = Date.now();
+          this.userActivity[this.name].status = 'online';
+        }
+      } else {
+        // WebSocket is closed, trigger reconnection
+        console.log('Status: Connection lost!');
+        console.log('WebSocket state:', this._webSocket ? 'exists but closed' : 'undefined');
+        this.handleDisconnection();
+      }
+      
+      console.groupEnd();
+    }, 8000);
   }
 
   private setupActivityMonitor() {
@@ -164,7 +325,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
 
   public ngAfterViewChecked() {
     this.scrollToBottom();
-    document.querySelector('.chat .novo-form').setAttribute('autocomplete', 'off');
+    // document.querySelector('.chat .novo-form').setAttribute('autocomplete', 'off');
   }
 
   public ngOnDestroy() {
@@ -175,13 +336,25 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     if (this.activityInterval) {
       clearInterval(this.activityInterval);
     }
+    // Close websocket connection
+    if (this._webSocket) {
+      this._webSocket.complete();
+    }
+    // Remove focus listener
+    window.removeEventListener('focus', this.setupFocusListener);
   }
 
   get webSocket(): WebSocketSubject<any> {
     if (typeof this._webSocket === 'undefined') {
-      this._webSocket = webSocket(
-        `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host.replace('4200', '4000')}/?session=${this.id}`
-      );
+      const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host.replace('4200', '4000')}/?session=${this.id}`;
+      
+      console.group('🌐 Creating WebSocket');
+      console.log('URL:', wsUrl);
+      console.log('Session:', this.id);
+      console.log('User:', this.name);
+      console.groupEnd();
+      
+      this._webSocket = webSocket(wsUrl);
       this._webSocket.next(new Message(this.name, undefined, this.id, 'points'));
     }
     return this._webSocket;
@@ -258,6 +431,18 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
 
   private handleSocketUpdates(res: Message): void {
     if (res && res.sender !== 'NS') {
+      // Log incoming messages (except heartbeats for noise reduction)
+      if (res.type !== 'heartbeat') {
+        console.group('📥 Received Message');
+        console.log('Type:', res.type);
+        console.log('Sender:', res.sender);
+        console.log('Content:', res.content);
+        console.log('Timestamp:', new Date(res.timestamp).toLocaleTimeString());
+        console.groupEnd();
+      } else {
+        console.log(`💓 Received heartbeat from ${res.sender} at ${new Date().toLocaleTimeString()}`);
+      }
+      
       // Update user activity on any message received
       if (!this.userActivity[res.sender]) {
         this.userActivity[res.sender] = {
@@ -295,7 +480,11 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
           this.updateDescription(res.content);
           break;
         case 'heartbeat':
-          // Just update the user's activity status
+          // Heartbeats keep the user online - update activity timestamp
+          if (this.userActivity[res.sender]) {
+            this.userActivity[res.sender].lastActive = Date.now();
+            this.userActivity[res.sender].status = 'online';
+          }
           break;
         case 'join':
           // Add to chat log as a system message
@@ -319,6 +508,17 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
 
   public send(content: string | number, type: any = 'points'): void {
     const message = new Message(this.name, content, this.id, type);
+    
+    if (type === 'heartbeat') {
+      console.log('💓 Sending heartbeat');
+    } else {
+      console.group('📤 Sending Message');
+      console.log('Type:', type);
+      console.log('Content:', content);
+      console.log('Sender:', this.name);
+      console.groupEnd();
+    }
+    
     this.webSocket.next(message);
   }
 

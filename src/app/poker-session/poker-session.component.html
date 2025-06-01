@@ -4,6 +4,10 @@
     <novo-card class="main-session-card">
       <header>
         <novo-title>Planning Poker Session</novo-title>
+        <div class="connection-status" *ngIf="reconnectAttempts > 0">
+          <i class="bhi-refresh spin"></i>
+          <span>Reconnecting...</span>
+        </div>
       </header>
 
       <div class="main-content">
@@ -159,7 +163,7 @@
               <novo-control [form]="chatForm" [control]="messageControl"></novo-control>
             </div>
           </novo-form>
-          <button theme="primary" icon="send" (click)="sendChat()" [disabled]="!chatForm.valid" class="send-button">Send</button>
+          <button theme="primary" icon="send" (click)="sendChat()" class="send-button">Send</button>
         </div>
       </div>
     </novo-card>
