@@ -50,6 +50,12 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000; // Start with 1 second
+  
+  // Cached chart data to prevent re-renders
+  private _cachedChartData: number[] = [];
+  private _cachedChartLabels: string[] = [];
+  private _lastPointValuesString: string = '';
+  public cachedChartConfig: any = null;
   public options: any[] = [
     {
       label: '.5',
@@ -102,7 +108,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
       legend: {
         position: 'top',
         labels: {
-          color: '#fff',
+          color: '#2C3E50',
           font: {
             size: 16
           }
@@ -112,11 +118,14 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
         color: '#fff',
         font: {
           size: 20,
+          weight: 'bold'
         },
         formatter: (value, ctx) => {
           const label = ctx.chart.data.labels[ctx.dataIndex];
           return label;
         },
+        textStrokeColor: '#2C3E50',
+        textStrokeWidth: 2,
       },
     }
   };
@@ -286,13 +295,25 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
         
         // Also update our own activity status
         if (!this.userActivity[this.name]) {
-          this.userActivity[this.name] = {
-            lastActive: Date.now(),
-            status: 'online'
+          this.userActivity = {
+            ...this.userActivity,
+            [this.name]: {
+              lastActive: Date.now(),
+              status: 'online'
+            }
+          };
+        } else if (this.userActivity[this.name].status !== 'online') {
+          // Only update if status is changing
+          this.userActivity = {
+            ...this.userActivity,
+            [this.name]: {
+              lastActive: Date.now(),
+              status: 'online'
+            }
           };
         } else {
+          // Just update timestamp without triggering change detection
           this.userActivity[this.name].lastActive = Date.now();
-          this.userActivity[this.name].status = 'online';
         }
       } else {
         // WebSocket is closed, trigger reconnection
@@ -309,17 +330,36 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     // Check user activity status every 10 seconds
     this.activityInterval = setInterval(() => {
       const currentTime = Date.now();
+      let hasChanges = false;
+      const newUserActivity = { ...this.userActivity };
 
-      Object.keys(this.userActivity).forEach(user => {
-        const lastActive = this.userActivity[user].lastActive;
-        const timeSinceActive = currentTime - lastActive;
+      Object.keys(newUserActivity).forEach(user => {
+        const userInfo = newUserActivity[user];
+        const timeSinceActive = currentTime - userInfo.lastActive;
+        let newStatus = userInfo.status;
 
         if (timeSinceActive > this.OFFLINE_THRESHOLD) {
-          this.userActivity[user].status = 'offline';
+          newStatus = 'offline';
         } else if (timeSinceActive > this.AWAY_THRESHOLD) {
-          this.userActivity[user].status = 'away';
+          newStatus = 'away';
+        } else {
+          newStatus = 'online';
+        }
+
+        // Only update if status changed
+        if (newStatus !== userInfo.status) {
+          hasChanges = true;
+          newUserActivity[user] = {
+            ...userInfo,
+            status: newStatus
+          };
         }
       });
+
+      // Only update the object reference if there were actual changes
+      if (hasChanges) {
+        this.userActivity = newUserActivity;
+      }
     }, 10000);
   }
 
@@ -382,6 +422,9 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     this.showValues = false;
     this.send('ClearVotes');
     this.send('', 'description');
+    // Reset chart cache
+    this._lastPointValuesString = '';
+    this.cachedChartConfig = null;
   }
 
   get spectator(): boolean {
@@ -394,39 +437,83 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   }
 
   get pointDistributionChartData(): number[] {
-    const pointValueCounts = this.getPointValueCountObject();
-    let data: number[] = [];
-    for (const pointValue in pointValueCounts) {
-      if (pointValueCounts.hasOwnProperty(pointValue)) {
-        data.push(pointValueCounts[pointValue]);
+    // Only recalculate if pointValues actually changed
+    const currentPointValuesString = this.getPointValuesString();
+    if (currentPointValuesString !== this._lastPointValuesString) {
+      this._lastPointValuesString = currentPointValuesString;
+      const pointValueCounts = this.getPointValueCountObject();
+      this._cachedChartData = [];
+      
+      for (const pointValue in pointValueCounts) {
+        if (pointValueCounts.hasOwnProperty(pointValue)) {
+          this._cachedChartData.push(pointValueCounts[pointValue]);
+        }
+      }
+      
+      if (Object.keys(pointValueCounts).length == 1 && !this.confettiShot) {
+        createConfettiCanvas({
+          shapes: ['square'],
+          particleCount: 100,
+          spread: 70,
+          angle: 42,
+        });
+        this.confettiShot = true;
       }
     }
-    if (Object.keys(pointValueCounts).length == 1 && !this.confettiShot) {
-      createConfettiCanvas({
-        shapes: ['square'],
-        particleCount: 100,
-        spread: 70,
-        angle: 42,
-      });
-    this.confettiShot = true;
-  }
     
-    return data;
+    return this._cachedChartData;
   }
 
   get pointDistributionChartLabels(): string[] {
-    const pointValueCounts = this.getPointValueCountObject();
-    let data: string[] = [];
-    for (const pointValue in pointValueCounts) {
-      if (pointValueCounts.hasOwnProperty(pointValue)) {
-        data.push(pointValue);
+    // Only recalculate if pointValues actually changed (reuse the check from chartData)
+    const currentPointValuesString = this.getPointValuesString();
+    if (currentPointValuesString !== this._lastPointValuesString) {
+      const pointValueCounts = this.getPointValueCountObject();
+      this._cachedChartLabels = [];
+      
+      for (const pointValue in pointValueCounts) {
+        if (pointValueCounts.hasOwnProperty(pointValue)) {
+          this._cachedChartLabels.push(pointValue);
+        }
       }
     }
-    return data;
+    
+    return this._cachedChartLabels;
+  }
+
+  private getPointValuesString(): string {
+    // Create a string representation of point values for comparison
+    // Only include actual votes, not undefined values
+    const relevantValues = {};
+    for (const user in this.pointValues) {
+      if (this.pointValues.hasOwnProperty(user) && 
+          this.pointValues[user] !== 'disconnect' && 
+          this.pointValues[user] !== undefined &&
+          this.pointValues[user] !== null) {
+        relevantValues[user] = this.pointValues[user];
+      }
+    }
+    return JSON.stringify(relevantValues);
   }
 
   get showChart(): boolean {
     return this.showValues && Object.keys(this.pointValues).length > 0;
+  }
+
+  get chartConfig(): any {
+    // Only recalculate if data actually changed
+    const currentPointValuesString = this.getPointValuesString();
+    if (currentPointValuesString !== this._lastPointValuesString || !this.cachedChartConfig) {
+      console.log('📊 Chart data recalculating. Old:', this._lastPointValuesString, 'New:', currentPointValuesString);
+      this.cachedChartConfig = {
+        labels: this.pointDistributionChartLabels,
+        datasets: [{
+          data: this.pointDistributionChartData,
+          backgroundColor: ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0']
+        }]
+      };
+    }
+    return this.cachedChartConfig;
   }
 
   private handleSocketUpdates(res: Message): void {
@@ -444,28 +531,55 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
       }
       
       // Update user activity on any message received
+      // Only create new object if user doesn't exist or status changes
       if (!this.userActivity[res.sender]) {
-        this.userActivity[res.sender] = {
-          lastActive: res.timestamp || Date.now(),
-          status: 'online'
+        this.userActivity = {
+          ...this.userActivity,
+          [res.sender]: {
+            lastActive: res.timestamp || Date.now(),
+            status: 'online'
+          }
+        };
+      } else if (this.userActivity[res.sender].status !== 'online') {
+        // Only update object reference if status is changing
+        this.userActivity = {
+          ...this.userActivity,
+          [res.sender]: {
+            lastActive: res.timestamp || Date.now(),
+            status: 'online'
+          }
         };
       } else {
+        // Just update the timestamp without changing object reference
         this.userActivity[res.sender].lastActive = res.timestamp || Date.now();
-        this.userActivity[res.sender].status = 'online';
       }
 
       switch (res.type) {
         case 'disconnect':
-          delete this.pointValues[res.sender];
+          // Remove from pointValues - create new object for change detection
+          const newPointValues = { ...this.pointValues };
+          delete newPointValues[res.sender];
+          this.pointValues = newPointValues;
+          
+          // Update user status to offline
           if (this.userActivity[res.sender]) {
-            this.userActivity[res.sender].status = 'offline';
+            this.userActivity = {
+              ...this.userActivity,
+              [res.sender]: {
+                ...this.userActivity[res.sender],
+                status: 'offline'
+              }
+            };
           }
           break;
         case 'points':
           if (this.showChart) {
             this.confettiShot = true;
           }
-          this.pointValues[res.sender] = res.content;
+          
+          // Update pointValues - create new object for change detection
+          this.pointValues = { ...this.pointValues, [res.sender]: res.content };
+          
           if (res.sender === this.name && res.content === undefined) {
             this.selectedPointValue = 0;
             if (!this.showChart) {
@@ -480,11 +594,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
           this.updateDescription(res.content);
           break;
         case 'heartbeat':
-          // Heartbeats keep the user online - update activity timestamp
-          if (this.userActivity[res.sender]) {
-            this.userActivity[res.sender].lastActive = Date.now();
-            this.userActivity[res.sender].status = 'online';
-          }
+          // Activity is already updated above, nothing else needed for heartbeats
           break;
         case 'join':
           // Add to chat log as a system message

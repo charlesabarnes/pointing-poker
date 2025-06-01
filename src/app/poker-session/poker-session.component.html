@@ -49,13 +49,7 @@
               <p>Point values will appear here once everyone has voted.</p>
             </div>
             <canvas *ngIf="showChart" baseChart
-              [data]="{
-                labels: pointDistributionChartLabels,
-                datasets: [{
-                  data: pointDistributionChartData,
-                  backgroundColor: ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0']
-                }]
-              }"
+              [data]="chartConfig"
               [options]="pointDistributionChartOptions"
               [type]="pointDistributionChartType"
               [plugins]="pieChartPlugins">
