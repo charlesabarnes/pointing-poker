@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterOutlet, Router } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CreateSessionComponent } from './create-session/create-session.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faCopy, faCog } from '@fortawesome/pro-solid-svg-icons';
 
 const POKER_NAME = 'POKER_NAME';
 const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -19,7 +20,7 @@ const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
     standalone: true,
     imports: [
       MatToolbarModule,
-      MatIconModule,
+      FontAwesomeModule,
       MatButtonModule,
       MatTooltipModule,
       RouterOutlet,
@@ -27,6 +28,10 @@ const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
     ]
 })
 export class AppComponent implements OnInit {
+  // FontAwesome icons
+  faCopy = faCopy;
+  faCog = faCog;
+
   constructor(
     public dialog: MatDialog,
     public router: Router,

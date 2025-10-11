@@ -12,8 +12,23 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatIconModule } from '@angular/material/icon';
 import { BaseChartDirective } from 'ng2-charts';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import {
+  faStickyNote,
+  faTimes,
+  faEye,
+  faFlag,
+  faClock,
+  faUser,
+  faUserPlus,
+  faUserCircle,
+  faCheckCircle,
+  faCircle,
+  faQuestionCircle,
+  faComments,
+  faPaperPlane
+} from '@fortawesome/pro-solid-svg-icons';
 
 export class Message {
   constructor(
@@ -45,11 +60,26 @@ const createConfettiCanvas = create(undefined, { useWorker: true, resize: true }
       MatInputModule,
       MatButtonToggleModule,
       MatSlideToggleModule,
-      MatIconModule,
+      FontAwesomeModule,
       BaseChartDirective
     ]
 })
 export class PokerSessionComponent implements OnInit, AfterViewChecked {
+  // FontAwesome icons
+  faStickyNote = faStickyNote;
+  faTimes = faTimes;
+  faEye = faEye;
+  faFlag = faFlag;
+  faClock = faClock;
+  faUser = faUser;
+  faUserPlus = faUserPlus;
+  faUserCircle = faUserCircle;
+  faCheckCircle = faCheckCircle;
+  faCircle = faCircle;
+  faQuestionCircle = faQuestionCircle;
+  faComments = faComments;
+  faPaperPlane = faPaperPlane;
+
   public id: string;
   public name: string;
   public _webSocket: WebSocketSubject<any>; // tslint:disable-line

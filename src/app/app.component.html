@@ -7,13 +7,13 @@
           (click)="copiedToClipboard()"
           matTooltip="Copy Session Link"
           matTooltipPosition="below">
-    <mat-icon>content_copy</mat-icon>
+    <fa-icon [icon]="faCopy"></fa-icon>
   </button>
   <button mat-icon-button
           (click)="changeName()"
           matTooltip="Change settings"
           matTooltipPosition="below">
-    <mat-icon>settings</mat-icon>
+    <fa-icon [icon]="faCog"></fa-icon>
   </button>
 </mat-toolbar>
 <div class="outlet-container">

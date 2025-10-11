@@ -15,7 +15,7 @@
       </form>
 
       <div class="tips">
-        <h4><mat-icon>info</mat-icon> Quick Tips:</h4>
+        <h4><fa-icon [icon]="faInfoCircle"></fa-icon> Quick Tips:</h4>
         <ul>
           <li>Share the session link with your team to invite them</li>
           <li>Use the story description field to describe what you're estimating</li>
@@ -27,7 +27,7 @@
   <mat-dialog-actions align="end">
     <button mat-button (click)="close()" data-automation-id="create-modal-cancel">Cancel</button>
     <button mat-raised-button color="primary" (click)="save()" data-automation-id="create-modal-save" [disabled]="!form.valid">
-      <mat-icon>check</mat-icon>
+      <fa-icon [icon]="faCheck"></fa-icon>
       Continue
     </button>
   </mat-dialog-actions>

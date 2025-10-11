@@ -2,7 +2,8 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faCheck, faPlus } from '@fortawesome/pro-solid-svg-icons';
 
 const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -11,9 +12,12 @@ const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
     templateUrl: './no-session.component.html',
     styleUrls: ['./no-session.component.scss'],
     standalone: true,
-    imports: [MatButtonModule, MatCardModule, MatIconModule]
+    imports: [MatButtonModule, MatCardModule, FontAwesomeModule]
 })
 export class NoSessionComponent {
+  // FontAwesome icons
+  faCheck = faCheck;
+  faPlus = faPlus;
 
   constructor(public router: Router) { }
 

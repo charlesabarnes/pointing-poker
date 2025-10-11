@@ -10,7 +10,7 @@
         <div class="main-content">
           <div class="left-panel">
             <div class="story-section">
-              <h3><mat-icon>note</mat-icon> Story Description</h3>
+              <h3><fa-icon [icon]="faStickyNote"></fa-icon> Story Description</h3>
               <form [formGroup]="form" *ngIf="form">
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Story Description</mat-label>
@@ -21,17 +21,17 @@
 
             <div class="action-buttons">
               <button mat-raised-button color="warn" (click)="clearVotes()">
-                <mat-icon>close</mat-icon>
+                <fa-icon [icon]="faTimes"></fa-icon>
                 Clear Votes
               </button>
               <button mat-raised-button color="primary" (click)="doShowValues()">
-                <mat-icon>search</mat-icon>
+                <fa-icon [icon]="faEye"></fa-icon>
                 Show Votes
               </button>
             </div>
 
             <div *ngIf="!spectator" class="point-value-container">
-              <h3><mat-icon>flag</mat-icon> Select Point Value</h3>
+              <h3><fa-icon [icon]="faFlag"></fa-icon> Select Point Value</h3>
               <mat-button-toggle-group [(ngModel)]="selectedPointValue" (change)="send($event.value)">
                 <mat-button-toggle *ngFor="let option of options" [value]="option.value" [disabled]="option.disabled">
                   {{option.label}}
@@ -40,7 +40,7 @@
             </div>
 
             <div class="point-value-container spectator-container">
-              <h3><mat-icon>visibility</mat-icon> Participant Mode</h3>
+              <h3><fa-icon [icon]="faEye"></fa-icon> Participant Mode</h3>
               <div class="spectator-toggle">
                 <span [ngClass]="{'active': !spectator}">Voter</span>
                 <mat-slide-toggle [(ngModel)]="spectator"></mat-slide-toggle>
@@ -52,7 +52,7 @@
           <div class="right-panel">
             <div class="chart-container">
               <div *ngIf="!showChart" class="waiting-for-votes">
-                <mat-icon>schedule</mat-icon>
+                <fa-icon [icon]="faClock"></fa-icon>
                 <h3>Waiting for votes...</h3>
                 <p>Point values will appear here once everyone has voted.</p>
               </div>
@@ -79,13 +79,13 @@
   <div class="mid-cards">
     <mat-card class="participants-card">
       <mat-card-header>
-        <mat-card-title><mat-icon>person</mat-icon> Participants</mat-card-title>
+        <mat-card-title><fa-icon [icon]="faUser"></fa-icon> Participants</mat-card-title>
       </mat-card-header>
 
       <mat-card-content>
         <!-- User join notification -->
         <div *ngIf="newUserJoined" class="user-joined-notification">
-          <mat-icon>person_add</mat-icon>
+          <fa-icon [icon]="faUserPlus"></fa-icon>
           <span>{{ recentJoinedUser }} has joined the session</span>
         </div>
 
@@ -106,7 +106,7 @@
                  [ngClass]="{'current-user': userName == name}">
               <div class="player-name">
                 <span>{{userName}}</span>
-                <mat-icon *ngIf="userName == name" title="You">account_circle</mat-icon>
+                <fa-icon *ngIf="userName == name" [icon]="faUserCircle" title="You"></fa-icon>
               </div>
               <div class="status-indicator">
                 <span class="status-dot"
@@ -122,13 +122,13 @@
               <div class="point-value">
                 <span *ngIf="showValues" class="vote-value">{{pointValues[userName]}}</span>
                 <div *ngIf="!showValues" class="vote-status">
-                  <mat-icon
+                  <fa-icon
+                    [icon]="pointValues[userName] ? faCheckCircle : faCircle"
                     [ngClass]="{
                       'has-voted': pointValues[userName],
                       'no-vote': !pointValues[userName]
                     }">
-                    {{ pointValues[userName] ? 'check_circle' : 'circle' }}
-                  </mat-icon>
+                  </fa-icon>
                   <span>{{ pointValues[userName] ? 'Voted' : 'Not voted' }}</span>
                 </div>
               </div>
@@ -139,7 +139,7 @@
 
       <mat-card-footer class="card-footer">
         <div class="help-text">
-          <mat-icon>help_outline</mat-icon>
+          <fa-icon [icon]="faQuestionCircle"></fa-icon>
           <span>If you experience issues, refresh the browser or <a href="https://github.com/charlesabarnes/pointing-poker" target="_blank">report it on GitHub</a></span>
         </div>
       </mat-card-footer>
@@ -147,7 +147,7 @@
 
     <mat-card class="chat-card">
       <mat-card-header>
-        <mat-card-title><mat-icon>chat</mat-icon> Team Chat</mat-card-title>
+        <mat-card-title><fa-icon [icon]="faComments"></fa-icon> Team Chat</mat-card-title>
       </mat-card-header>
 
       <mat-card-content>
@@ -164,7 +164,7 @@
                 <span class="timestamp" title="{{chat.timestamp | date:'medium'}}">{{ chat.timestamp | date:'shortTime' }}</span>
               </ng-container>
               <ng-container *ngIf="chat.type === 'join'">
-                <mat-icon>person_add</mat-icon>
+                <fa-icon [icon]="faUserPlus"></fa-icon>
                 <span class="system-text">{{ chat.sender }} {{ chat.content }}</span>
               </ng-container>
             </div>
@@ -178,7 +178,7 @@
               </mat-form-field>
             </form>
             <button mat-raised-button color="primary" (click)="sendChat()" [disabled]="!chatForm.valid" class="send-button">
-              <mat-icon>send</mat-icon>
+              <fa-icon [icon]="faPaperPlane"></fa-icon>
               Send
             </button>
           </div>
