@@ -1,12 +1,17 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+
 const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
 @Component({
     selector: 'app-no-session',
     templateUrl: './no-session.component.html',
     styleUrls: ['./no-session.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [MatButtonModule, MatCardModule, MatIconModule]
 })
 export class NoSessionComponent {
 

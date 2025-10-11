@@ -1,8 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterOutlet, Router } from '@angular/router';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CreateSessionComponent } from './create-session/create-session.component';
-import { Router } from '@angular/router';
+
 const POKER_NAME = 'POKER_NAME';
 const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -10,7 +16,15 @@ const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+      MatToolbarModule,
+      MatIconModule,
+      MatButtonModule,
+      MatTooltipModule,
+      RouterOutlet,
+      ClipboardModule
+    ]
 })
 export class AppComponent implements OnInit {
   constructor(

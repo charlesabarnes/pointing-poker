@@ -1,10 +1,19 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
-import { FormGroup, FormControl } from '@angular/forms';
+import { FormGroup, FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ChartOptions, ChartType, ChartData } from 'chart.js';
 import * as pluginDataLabels from 'chartjs-plugin-datalabels';
 import confetti, { create } from 'canvas-confetti';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatIconModule } from '@angular/material/icon';
+import { BaseChartDirective } from 'ng2-charts';
 
 export class Message {
   constructor(
@@ -25,7 +34,20 @@ const createConfettiCanvas = create(undefined, { useWorker: true, resize: true }
     selector: 'app-poker-session',
     templateUrl: './poker-session.component.html',
     styleUrls: ['./poker-session.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+      CommonModule,
+      ReactiveFormsModule,
+      FormsModule,
+      MatCardModule,
+      MatButtonModule,
+      MatFormFieldModule,
+      MatInputModule,
+      MatButtonToggleModule,
+      MatSlideToggleModule,
+      MatIconModule,
+      BaseChartDirective
+    ]
 })
 export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public id: string;

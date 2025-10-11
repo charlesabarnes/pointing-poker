@@ -8,7 +8,7 @@
     "build": "npm run build:client-bundles && npm run build:server",
     "build:modern": "npm run build:client-bundles && npm run build:server",
     "lint": "ng lint",
-    "build:server": "tsc -p tsconfig.server.json",
+    "build:server": "tsc -p src/tsconfig.server.json",
     "build:client-bundles": "ng build --configuration production",
     "build:client-and-server-bundles": "ng build --configuration production"
   },

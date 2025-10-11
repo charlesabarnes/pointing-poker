@@ -1,12 +1,26 @@
 import { Component, OnInit } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
-import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
     selector: 'app-create-session',
     templateUrl: './create-session.component.html',
     styleUrls: ['./create-session.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+      CommonModule,
+      ReactiveFormsModule,
+      MatButtonModule,
+      MatFormFieldModule,
+      MatInputModule,
+      MatIconModule,
+      MatDialogModule
+    ]
 })
 export class CreateSessionComponent implements OnInit {
 
