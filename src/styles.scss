@@ -1,23 +1,58 @@
 /* You can add global styles to this file, and also import other style files */
-@import "./node_modules/novo-elements/novo-elements";
+@use '@angular/material' as mat;
+
+// Include the common styles for Angular Material
+@include mat.core();
+
+// Define a dark theme for the app
+$custom-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$violet-palette,
+  ),
+));
+
+// Include theme styles for core and each component used in your app
+@include mat.all-component-themes($custom-theme);
 
 body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
   background-color: #F4F4F4;
+  color: #333;
+}
+
+// Custom global styles for the app
+.mat-mdc-card {
+  background-color: #3D464D;
   color: #FFF;
-  .novo-card, .novo-card>main {
-    background-color: #3D464D;
-  }
-  .tile-container {
-    flex-flow: row wrap;
-    .active-indicator {
-      height: calc(39px + 0.32em)
+}
+
+.full-width {
+  width: 100%;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+// Custom styles for mat-button-toggle-group
+mat-button-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+// Specific styling for the app
+app-poker-session {
+  .top-card {
+    .mat-mdc-form-field input {
+      color: #F4F4F4 !important;
     }
   }
-  app-poker-session {
-    .top-card {
-      div.novo-form-container input{
-        color: #F4F4F4 !important;
-      }
-    }
-  }
+}
+
+// Material icon size adjustments
+.mat-icon {
+  vertical-align: middle;
 }

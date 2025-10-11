@@ -1,24 +1,23 @@
-import { Component, OnInit, ViewContainerRef } from '@angular/core';
-import { NovoModalService, NovoToastService } from 'novo-elements';
+import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { CreateSessionComponent } from './create-session/create-session.component';
 import { Router } from '@angular/router';
 const POKER_NAME = 'POKER_NAME';
 const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    standalone: false
 })
 export class AppComponent implements OnInit {
   constructor(
-    public modalService: NovoModalService,
-    public ref: ViewContainerRef,
+    public dialog: MatDialog,
     public router: Router,
-    public toastService: NovoToastService
+    public snackBar: MatSnackBar
     ) {
-    this.modalService.parentViewContainer = ref;
-    this.toastService.parentViewContainer = ref;
   }
   public name: string;
 
@@ -30,12 +29,10 @@ export class AppComponent implements OnInit {
   }
 
   public copiedToClipboard(): void {
-    this.toastService.alert({
-      title: 'Url Copied',
-      message: 'Copied Url to clipboard',
-      icon: 'clipboard',
-      theme: 'success',
-      position: 'fixedTop',
+    this.snackBar.open('Copied URL to clipboard', 'Close', {
+      duration: 3000,
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
     });
   }
 
@@ -55,7 +52,14 @@ export class AppComponent implements OnInit {
   }
 
   public changeName() {
-    this.modalService.open(CreateSessionComponent).onClosed.then(this.startSession.bind(this));
+    const dialogRef = this.dialog.open(CreateSessionComponent, {
+      width: '500px',
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      this.startSession(result);
+    });
   }
 
   private generateSessionId(length: number): string {

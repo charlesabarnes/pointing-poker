@@ -1,21 +1,21 @@
-<novo-modal class="onboarding-modal">
-  <header class="apply-modal-header" title="Welcome to Pointing Poker" theme="primary">
-    <utils>
-      <novo-title>Get started with your session</novo-title>
-    </utils>
-  </header>
-  <section>
+<div class="onboarding-modal">
+  <h2 mat-dialog-title>Get started with your session</h2>
+  <mat-dialog-content>
     <div class="modal-content">
       <p class="intro-text">Enter your name to join or create a planning poker session. Your name will be visible to all participants.</p>
 
-      <novo-form [form]="form" *ngIf="form" (submit)="save()">
-        <div class="novo-form-row">
-          <novo-control [form]="form" [control]="nameControl"></novo-control>
-        </div>
-      </novo-form>
+      <form [formGroup]="form" *ngIf="form" (ngSubmit)="save()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" placeholder="Please Enter Name" required>
+          <mat-error *ngIf="form.get('name').hasError('required')">
+            Name is required
+          </mat-error>
+        </mat-form-field>
+      </form>
 
       <div class="tips">
-        <h4><i class="bhi-info"></i> Quick Tips:</h4>
+        <h4><mat-icon>info</mat-icon> Quick Tips:</h4>
         <ul>
           <li>Share the session link with your team to invite them</li>
           <li>Use the story description field to describe what you're estimating</li>
@@ -23,7 +23,12 @@
         </ul>
       </div>
     </div>
-  </section>
-  <button theme="standard" (click)="close()" data-automation-id="create-modal-cancel">Cancel</button>
-  <button theme="primary" icon="check" (click)="save()" data-automation-id="create-modal-save" [disabled]="!form.valid">Continue</button>
-</novo-modal>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="close()" data-automation-id="create-modal-cancel">Cancel</button>
+    <button mat-raised-button color="primary" (click)="save()" data-automation-id="create-modal-save" [disabled]="!form.valid">
+      <mat-icon>check</mat-icon>
+      Continue
+    </button>
+  </mat-dialog-actions>
+</div>

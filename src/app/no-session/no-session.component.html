@@ -1,34 +1,39 @@
 <section class="welcome-container">
-    <novo-card class="welcome-card">
-        <header>
-            <novo-title>Welcome to Pointing Poker</novo-title>
-        </header>
-        <div class="welcome-content">
-            <p>A simple, real-time planning poker app for agile estimation.</p>
+    <mat-card class="welcome-card">
+        <mat-card-header>
+            <mat-card-title>Welcome to Pointing Poker</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="welcome-content">
+                <p>A simple, real-time planning poker app for agile estimation.</p>
 
-            <div class="features-list">
-                <div class="feature-item">
-                    <i class="bhi-check"></i>
-                    <span>Collaborate in real-time with your team</span>
+                <div class="features-list">
+                    <div class="feature-item">
+                        <mat-icon>check</mat-icon>
+                        <span>Collaborate in real-time with your team</span>
+                    </div>
+                    <div class="feature-item">
+                        <mat-icon>check</mat-icon>
+                        <span>Vote on story points using standard scales</span>
+                    </div>
+                    <div class="feature-item">
+                        <mat-icon>check</mat-icon>
+                        <span>View results with beautiful charts</span>
+                    </div>
+                    <div class="feature-item">
+                        <mat-icon>check</mat-icon>
+                        <span>Chat with team members during estimation</span>
+                    </div>
                 </div>
-                <div class="feature-item">
-                    <i class="bhi-check"></i>
-                    <span>Vote on story points using standard scales</span>
-                </div>
-                <div class="feature-item">
-                    <i class="bhi-check"></i>
-                    <span>View results with beautiful charts</span>
-                </div>
-                <div class="feature-item">
-                    <i class="bhi-check"></i>
-                    <span>Chat with team members during estimation</span>
+
+                <div class="actions">
+                    <button mat-raised-button color="primary" (click)="createSession()" data-automation-id="create-session-button">
+                        <mat-icon>add</mat-icon>
+                        Create New Session
+                    </button>
+                    <p class="join-text">Already have a session link? Simply open it in your browser.</p>
                 </div>
             </div>
-
-            <div class="actions">
-                <button theme="primary" icon="add" (click)="createSession()" data-automation-id="create-session-button">Create New Session</button>
-                <p class="join-text">Already have a session link? Simply open it in your browser.</p>
-            </div>
-        </div>
-    </novo-card>
+        </mat-card-content>
+    </mat-card>
 </section>

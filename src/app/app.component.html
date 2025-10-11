@@ -1,12 +1,21 @@
-<header title="Pointing Poker" theme="dark" [condensed]="true">
-  <utils>
-    <span class="name">{{ name }}</span>
-    <header-spacer></header-spacer>
-    <util-action icon="clipboard" tooltip="Copy Session Link" [tooltipAutoPosition]="true" [removeTooltipArrow]="true" ngxClipboard [cbContent]="currentUrl" (click)="copiedToClipboard()"></util-action>
-    <util-action icon="tools" tooltip="Change settings" [tooltipAutoPosition]="true" [removeTooltipArrow]="true" (click)="changeName()"></util-action>
-  </utils>
-  <div class="entity-header" novo-title></div>
-</header>
+<mat-toolbar color="primary" class="app-header">
+  <span class="app-title">Pointing Poker</span>
+  <span class="name">{{ name }}</span>
+  <span class="spacer"></span>
+  <button mat-icon-button
+          [cdkCopyToClipboard]="currentUrl"
+          (click)="copiedToClipboard()"
+          matTooltip="Copy Session Link"
+          matTooltipPosition="below">
+    <mat-icon>content_copy</mat-icon>
+  </button>
+  <button mat-icon-button
+          (click)="changeName()"
+          matTooltip="Change settings"
+          matTooltipPosition="below">
+    <mat-icon>settings</mat-icon>
+  </button>
+</mat-toolbar>
 <div class="outlet-container">
   <router-outlet></router-outlet>
 </div>

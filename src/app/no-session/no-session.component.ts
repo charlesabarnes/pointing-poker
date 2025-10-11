@@ -3,9 +3,10 @@ import { Router } from '@angular/router';
 const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
 @Component({
-  selector: 'app-no-session',
-  templateUrl: './no-session.component.html',
-  styleUrls: ['./no-session.component.scss']
+    selector: 'app-no-session',
+    templateUrl: './no-session.component.html',
+    styleUrls: ['./no-session.component.scss'],
+    standalone: false
 })
 export class NoSessionComponent {
 

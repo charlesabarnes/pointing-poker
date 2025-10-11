@@ -1,37 +1,37 @@
 import { Component, OnInit } from '@angular/core';
-import { NovoModalRef, NovoFormGroup, TextBoxControl, FormUtils } from 'novo-elements';
+import { MatDialogRef } from '@angular/material/dialog';
+import { FormGroup, FormControl, Validators } from '@angular/forms';
 
 @Component({
-  selector: 'app-create-session',
-  templateUrl: './create-session.component.html',
-  styleUrls: ['./create-session.component.scss']
+    selector: 'app-create-session',
+    templateUrl: './create-session.component.html',
+    styleUrls: ['./create-session.component.scss'],
+    standalone: false
 })
 export class CreateSessionComponent implements OnInit {
 
-  public form: NovoFormGroup;
-  public nameControl: TextBoxControl;
+  public form: FormGroup;
 
-  constructor(public modalRef: NovoModalRef, public formUtils: FormUtils) { }
+  constructor(public dialogRef: MatDialogRef<CreateSessionComponent>) { }
 
   public ngOnInit() {
     this.createForm();
   }
 
   public close(): void {
-    this.modalRef.close(undefined);
+    this.dialogRef.close(undefined);
   }
 
   public save(): void {
-    this.modalRef.close(this.form.value.name);
+    if (this.form.valid) {
+      this.dialogRef.close(this.form.value.name);
+    }
   }
 
   public createForm() {
-    this.nameControl = new TextBoxControl({
-      key: 'name',
-      required: true,
-      placeholder: 'Please Enter Name'
+    this.form = new FormGroup({
+      name: new FormControl('', [Validators.required])
     });
-    this.form = this.formUtils.toFormGroup([this.nameControl]);
   }
 
 }

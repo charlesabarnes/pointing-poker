@@ -3,14 +3,6 @@ import { NgModule, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from '@angular/cor
 import { RouterModule, Routes } from '@angular/router';
 
 import { AppComponent } from './app.component';
-import {
-  NovoFormModule,
-  NovoElementsModule,
-  NovoModalService,
-  FieldInteractionApi,
-  NovoToastService,
-  NovoTilesModule
-} from 'novo-elements';
 import { ScrollDispatchModule } from './types/scroll-dispatch-module';
 import { PokerSessionComponent } from './poker-session/poker-session.component';
 import { CreateSessionComponent } from './create-session/create-session.component';
@@ -19,6 +11,19 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NoSessionComponent } from './no-session/no-session.component';
 import { ClipboardModule } from 'ngx-clipboard';
 import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
+
+// Angular Material imports
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 const appRoutes: Routes = [
   { path: '', component: NoSessionComponent },
@@ -33,22 +38,28 @@ const appRoutes: Routes = [
       NoSessionComponent
    ],
    imports: [
-      BrowserModule.withServerTransition({ appId: 'serverApp'}),
-      NovoElementsModule,
-      NovoFormModule,
-      NovoTilesModule,
+      BrowserModule,
       ReactiveFormsModule,
       FormsModule,
       BrowserAnimationsModule,
       RouterModule.forRoot( appRoutes, { enableTracing: false, useHash: false }),
       ClipboardModule,
       BaseChartDirective,
-      ScrollDispatchModule
+      ScrollDispatchModule,
+      // Angular Material modules
+      MatDialogModule,
+      MatCardModule,
+      MatButtonModule,
+      MatFormFieldModule,
+      MatInputModule,
+      MatSlideToggleModule,
+      MatButtonToggleModule,
+      MatToolbarModule,
+      MatSnackBarModule,
+      MatIconModule,
+      MatTooltipModule
   ],
   providers: [
-    NovoModalService,
-    FieldInteractionApi,
-    NovoToastService,
     provideCharts(withDefaultRegisterables()),
     // Add a provider for ScrollDispatchModule
     { provide: 'ScrollDispatchModule', useValue: {} }

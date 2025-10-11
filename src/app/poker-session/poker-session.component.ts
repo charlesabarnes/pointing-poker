@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
-import { NovoFormGroup, TextBoxControl, FormUtils, FieldInteractionApi } from 'novo-elements';
+import { FormGroup, FormControl } from '@angular/forms';
 import { ChartOptions, ChartType, ChartData } from 'chart.js';
 import * as pluginDataLabels from 'chartjs-plugin-datalabels';
 import confetti, { create } from 'canvas-confetti';
@@ -22,9 +22,10 @@ export class Message {
 const createConfettiCanvas = create(undefined, { useWorker: true, resize: true });
 
 @Component({
-  selector: 'app-poker-session',
-  templateUrl: './poker-session.component.html',
-  styleUrls: ['./poker-session.component.scss']
+    selector: 'app-poker-session',
+    templateUrl: './poker-session.component.html',
+    styleUrls: ['./poker-session.component.scss'],
+    standalone: false
 })
 export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public id: string;
@@ -34,10 +35,8 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   public selectedPointValue: any;
   public lastDescription = '';
   public chatLog: Message[] = [];
-  public form: NovoFormGroup;
-  public chatForm: NovoFormGroup;
-  public nameControl: TextBoxControl;
-  public messageControl: TextBoxControl;
+  public form: FormGroup;
+  public chatForm: FormGroup;
   public _showValues: boolean = false; // tslint:disable-line
   public _spectator: boolean = false; // tslint:disable-line
   public userActivity: {[key: string]: {lastActive: number, status: 'online' | 'away' | 'offline'}} = {};
@@ -118,7 +117,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
     }
   };
 
-  constructor(private route: ActivatedRoute, public formUtils: FormUtils) { }
+  constructor(private route: ActivatedRoute) { }
 
   public ngOnInit() {
     this.id = this.route.snapshot.paramMap.get('id');
@@ -164,7 +163,10 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
 
   public ngAfterViewChecked() {
     this.scrollToBottom();
-    document.querySelector('.chat .novo-form').setAttribute('autocomplete', 'off');
+    const chatForm = document.querySelector('.chat form');
+    if (chatForm) {
+      chatForm.setAttribute('autocomplete', 'off');
+    }
   }
 
   public ngOnDestroy() {
@@ -329,28 +331,22 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   }
 
   public createChatForm() {
-    this.messageControl = new TextBoxControl({
-      key: 'message',
-      required: false,
-      placeholder: 'Send Message',
+    this.chatForm = new FormGroup({
+      message: new FormControl('')
     });
-    this.chatForm = this.formUtils.toFormGroup([this.messageControl]);
   }
 
   public createForm() {
-    this.nameControl = new TextBoxControl({
-      key: 'storyDescription',
-      required: false,
-      placeholder: 'Story Description',
-      interactions: [{
-        event: 'change', script: (API: FieldInteractionApi) => {
-          if (API.getActiveValue() !== this.lastDescription) {
-            this.send(API.getActiveValue(), 'description');
-          }
-        }
-      }]
+    this.form = new FormGroup({
+      storyDescription: new FormControl('')
     });
-    this.form = this.formUtils.toFormGroup([this.nameControl]);
+
+    // Listen for changes to the story description
+    this.form.get('storyDescription').valueChanges.subscribe(value => {
+      if (value !== this.lastDescription) {
+        this.send(value, 'description');
+      }
+    });
   }
 
   private updateDescription(description: any): void {
