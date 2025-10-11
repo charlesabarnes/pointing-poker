@@ -1,0 +1,25 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": ["ES2022", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@pointing-poker/shared": ["libs/shared/src/index.ts"],
+      "chart.js/dist/types/utils": ["node_modules/chart.js/types/utils"],
+      "shared": ["libs/shared/src/index.ts"]
+    },
+    "useDefineForClassFields": false
+  },
+  "exclude": ["node_modules", "tmp"]
+}

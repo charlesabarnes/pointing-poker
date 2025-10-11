@@ -2,44 +2,19 @@ import express from 'express';
 import * as http from 'http';
 import * as WebSocket from 'ws';
 import { join } from 'path';
+import { Message, MessageType, ExtWebSocket } from 'shared';
 
 // Express server
 const app = express();
 const PORT: string | number = process.env.PORT || 4000;
-const DIST_FOLDER: string = join(process.cwd(), 'dist/browser');
-
-// Define WebSocket extension interface
-interface ExtWebSocket extends WebSocket {
-  isAlive: boolean;
-  session?: string;
-  name?: string;
-  content?: string | number;
-}
-
-// Message class for TypeScript
-export class Message {
-  public content: string | number;
-  public sender: string;
-  public type: 'chat' | 'points' | 'action' | 'disconnect' | 'description' | 'heartbeat' | 'join';
-  public timestamp: number;
-
-  constructor(
-    content: string | number,
-    sender: string,
-    type: 'chat' | 'points' | 'action' | 'disconnect' | 'description' | 'heartbeat' | 'join',
-    timestamp?: number
-  ) {
-    this.content = content;
-    this.sender = sender;
-    this.type = type;
-    this.timestamp = timestamp || Date.now();
-  }
-}
+const DIST_FOLDER: string = join(process.cwd(), 'dist/apps/frontend/browser');
 
 // Serve static files from /browser
-app.use(express.static(DIST_FOLDER, {
-  maxAge: '1y'
-}));
+app.use(
+  express.static(DIST_FOLDER, {
+    maxAge: '1y',
+  })
+);
 
 // All regular routes use the index.html
 app.get('*', (req: express.Request, res: express.Response) => {
@@ -48,12 +23,13 @@ app.get('*', (req: express.Request, res: express.Response) => {
 
 // Create message helper
 function createMessage(
-  content: string | number,
   sender: string = 'NS',
-  type: 'chat' | 'points' | 'action' | 'disconnect' | 'description' | 'heartbeat' | 'join',
+  content: string | number | undefined,
+  type: MessageType,
+  session?: string,
   timestamp?: number
 ): string {
-  return JSON.stringify(new Message(content, sender, type, timestamp));
+  return JSON.stringify(new Message(sender, content, type, session, timestamp));
 }
 
 // Initialize WebSocket server
@@ -64,17 +40,17 @@ const wss = new WebSocket.Server({ server });
 wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   // TypeScript fix for req.url
   const url: string = req.url || '/';
-  
+
   // Cast to our extended WebSocket
-  const extWs = ws as ExtWebSocket;
+  const extWs = ws as unknown as WebSocket & ExtWebSocket;
   extWs.isAlive = true;
   extWs.session = url.replace('/?session=', '');
 
   // Send existing point values to new connection
   wss.clients.forEach((client: WebSocket) => {
-    const extClient = client as ExtWebSocket;
+    const extClient = client as unknown as WebSocket & ExtWebSocket;
     if (extClient.session === extWs.session) {
-      ws.send(createMessage(extClient.content, extClient.name, 'points'));
+      ws.send(createMessage(extClient.name, extClient.content, 'points'));
     }
   });
 
@@ -92,9 +68,17 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       case 'chat':
         setTimeout(() => {
           wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as ExtWebSocket;
+            const extClient = client as unknown as WebSocket & ExtWebSocket;
             if (extClient.session === extWs.session) {
-              client.send(createMessage(message.content, message.sender, 'chat', message.timestamp));
+              client.send(
+                createMessage(
+                  message.sender,
+                  message.content,
+                  'chat',
+                  undefined,
+                  message.timestamp
+                )
+              );
             }
           });
         }, 100);
@@ -103,9 +87,17 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       case 'description':
         setTimeout(() => {
           wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as ExtWebSocket;
+            const extClient = client as unknown as WebSocket & ExtWebSocket;
             if (extClient.session === extWs.session) {
-              client.send(createMessage(message.content, message.sender, 'description', message.timestamp));
+              client.send(
+                createMessage(
+                  message.sender,
+                  message.content,
+                  'description',
+                  undefined,
+                  message.timestamp
+                )
+              );
             }
           });
         }, 100);
@@ -120,9 +112,17 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         // Broadcast join message to all clients in the session
         setTimeout(() => {
           wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as ExtWebSocket;
+            const extClient = client as unknown as WebSocket & ExtWebSocket;
             if (extClient.session === extWs.session) {
-              client.send(createMessage(message.content, message.sender, 'join', message.timestamp));
+              client.send(
+                createMessage(
+                  message.sender,
+                  message.content,
+                  'join',
+                  undefined,
+                  message.timestamp
+                )
+              );
             }
           });
         }, 100);
@@ -131,23 +131,28 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       case 'points':
         if (message.content === 'ClearVotes') {
           wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as ExtWebSocket;
+            const extClient = client as unknown as WebSocket & ExtWebSocket;
             if (extClient.session === extWs.session) {
               wss.clients.forEach((connectedClient: WebSocket) => {
-                const extConnectedClient = connectedClient as ExtWebSocket;
-                if (extClient.session === extConnectedClient.session && 
-                    extConnectedClient.content !== 'disconnect') {
+                const extConnectedClient = connectedClient as unknown as WebSocket &
+                  ExtWebSocket;
+                if (
+                  extClient.session === extConnectedClient.session &&
+                  extConnectedClient.content !== 'disconnect'
+                ) {
                   extConnectedClient.content = undefined;
-                  client.send(createMessage(undefined, extConnectedClient.name, 'points'));
+                  client.send(
+                    createMessage(extConnectedClient.name, undefined, 'points')
+                  );
                 }
               });
             }
           });
         } else if (message.content === 'spectate') {
           wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as ExtWebSocket;
+            const extClient = client as unknown as WebSocket & ExtWebSocket;
             if (extClient.session === extWs.session) {
-              client.send(createMessage('disconnect', extWs.name, 'disconnect'));
+              client.send(createMessage(extWs.name, 'disconnect', 'disconnect'));
               extWs.content = 'disconnect';
             }
           });
@@ -155,15 +160,23 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
           extWs.content = message.content;
           setTimeout(() => {
             wss.clients.forEach((client: WebSocket) => {
-              const extClient = client as ExtWebSocket;
+              const extClient = client as unknown as WebSocket & ExtWebSocket;
               if (extClient.session === extWs.session) {
-                client.send(createMessage(message.content, message.sender, 'points', message.timestamp));
+                client.send(
+                  createMessage(
+                    message.sender,
+                    message.content,
+                    'points',
+                    undefined,
+                    message.timestamp
+                  )
+                );
               }
             });
           }, 100);
         }
         break;
-        
+
       default:
         break;
     }
@@ -172,9 +185,9 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   // Handle errors
   ws.on('error', () => {
     wss.clients.forEach((client: WebSocket) => {
-      const extClient = client as ExtWebSocket;
+      const extClient = client as unknown as WebSocket & ExtWebSocket;
       if (extClient.session === extWs.session && ws !== client) {
-        client.send(createMessage('disconnect', extWs.name, 'disconnect'));
+        client.send(createMessage(extWs.name, 'disconnect', 'disconnect'));
       }
     });
   });
@@ -183,16 +196,16 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
 // Check connections every 10 seconds
 setInterval(() => {
   wss.clients.forEach((ws: WebSocket) => {
-    const extWs = ws as ExtWebSocket;
-    
+    const extWs = ws as unknown as WebSocket & ExtWebSocket;
+
     if (!extWs.isAlive) {
       wss.clients.forEach((client: WebSocket) => {
-        const extClient = client as ExtWebSocket;
+        const extClient = client as unknown as WebSocket & ExtWebSocket;
         if (extClient.session === extWs.session && ws !== client) {
-          client.send(createMessage('disconnect', extWs.name, 'disconnect'));
+          client.send(createMessage(extWs.name, 'disconnect', 'disconnect'));
         }
       });
-      
+
       console.log('client Disconnected');
       return ws.terminate();
     }

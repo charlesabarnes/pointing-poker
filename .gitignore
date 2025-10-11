@@ -48,3 +48,5 @@ Thumbs.db
 
 .angular
 **/.claude/settings.local.json
+.nx/cache
+.nx/workspace-data

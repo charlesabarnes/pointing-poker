@@ -29,18 +29,7 @@ import {
   faComments,
   faPaperPlane
 } from '@fortawesome/pro-solid-svg-icons';
-
-export class Message {
-  constructor(
-    public sender: string,
-    public content: string | number,
-    public session: string,
-    public type: 'chat' | 'points' | 'action' | 'disconnect' | 'description' | 'heartbeat' | 'join',
-    public timestamp?: number
-  ) {
-    this.timestamp = this.timestamp || Date.now();
-  }
-}
+import { Message, MessageType } from 'shared';
 
 // TODO: clean confetti logic
 const createConfettiCanvas = create(undefined, { useWorker: true, resize: true });
@@ -236,7 +225,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
       this._webSocket = webSocket(
         `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host.replace('4200', '4000')}/?session=${this.id}`
       );
-      this._webSocket.next(new Message(this.name, undefined, this.id, 'points'));
+      this._webSocket.next(new Message(this.name, undefined, 'points', this.id));
     }
     return this._webSocket;
   }
@@ -372,7 +361,7 @@ export class PokerSessionComponent implements OnInit, AfterViewChecked {
   }
 
   public send(content: string | number, type: any = 'points'): void {
-    const message = new Message(this.name, content, this.id, type);
+    const message = new Message(this.name, content, type, this.id);
     this.webSocket.next(message);
   }
 
