@@ -17,7 +17,6 @@
 
 // Card header styling
 @mixin card-header {
-  background: $color-overlay-medium;
   padding: $spacing-xl;
   border-bottom: $border-width-sm solid $color-overlay-light;
 }

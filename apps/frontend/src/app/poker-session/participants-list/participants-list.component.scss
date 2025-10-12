@@ -6,10 +6,6 @@
   margin-bottom: $spacing-xl;
 }
 
-mat-card-title {
-  @include card-title;
-}
-
 .user-joined-notification {
   background: $color-success-light;
   border-left: $border-width-xl solid $color-success;

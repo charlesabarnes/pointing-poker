@@ -14,18 +14,6 @@
     .main-session-card {
       @include card-base;
 
-      mat-card-header {
-        @include card-header;
-
-        mat-card-title {
-          @include card-title;
-        }
-      }
-
-      mat-card-content {
-        @include card-content;
-      }
-
       .main-content {
         @include grid-responsive(2, $spacing-2xl, $breakpoint-lg);
       }

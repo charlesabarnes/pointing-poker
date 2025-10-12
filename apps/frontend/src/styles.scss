@@ -4,21 +4,39 @@
 // Import design system
 @use 'variables' as *;
 @use 'mixins' as *;
+@use 'overrides' as overrides;
 
 // Include the common styles for Angular Material
 @include mat.core();
 
-// Define a light theme for the app with custom primary color
+// Define a light theme for the app with proper Material 3 configuration
 $custom-theme: mat.define-theme((
   color: (
     theme-type: light,
     primary: mat.$azure-palette,
     tertiary: mat.$green-palette,
   ),
+  typography: (
+    plain-family: $font-family-base,
+    brand-family: $font-family-base,
+    bold-weight: $font-weight-bold,
+    medium-weight: $font-weight-medium,
+    regular-weight: $font-weight-normal,
+  ),
+  density: (
+    scale: 0,
+  ),
 ));
 
 // Include theme styles for core and each component used in your app
 @include mat.all-component-themes($custom-theme);
+
+// ============================================================================
+// MATERIAL COMPONENT OVERRIDES
+// ============================================================================
+
+// Apply Material component customizations
+@include overrides.apply-overrides;
 
 // ============================================================================
 // BASE STYLES
@@ -38,24 +56,6 @@ body {
 
 .skip-link {
   @include skip-link;
-}
-
-// ============================================================================
-// MATERIAL OVERRIDES
-// ============================================================================
-
-.mat-mdc-card {
-  background-color: $color-bg-card;
-  color: $color-text-primary;
-  border: 1px solid $color-overlay-medium;
-}
-
-.mat-mdc-form-field input {
-  color: $color-text-primary;
-}
-
-.mat-mdc-form-field label {
-  color: $color-text-tertiary;
 }
 
 // ============================================================================
