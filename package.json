@@ -11,11 +11,14 @@
     "serve:frontend": "nx serve frontend",
     "serve:backend": "nx serve backend",
     "lint": "nx run-many --target=lint --all",
-    "test": "nx run-many --target=test --all"
+    "test": "nx run-many --target=test --all",
+    "e2e": "nx e2e frontend",
+    "e2e:ui": "nx e2e frontend --ui",
+    "e2e:headed": "nx e2e frontend --headed"
   },
   "private": true,
   "engines": {
-    "node": ">=18.3.0"
+    "node": "22.x"
   },
   "dependencies": {
     "@angular/animations": "^20.3.4",
@@ -60,11 +63,14 @@
     "@angular/compiler-cli": "^20.3.4",
     "@angular/language-service": "^20.3.4",
     "@nx/angular": "^21.6.4",
+    "@nx/devkit": "21.6.4",
     "@nx/js": "^21.6.4",
     "@nx/node": "^21.6.4",
+    "@nx/playwright": "^21.6.4",
     "@nx/web": "21.6.4",
     "@nx/webpack": "21.6.4",
     "@nx/workspace": "^21.6.4",
+    "@playwright/test": "^1.56.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.7",
     "@schematics/angular": "^20.3.5",
     "@svgr/webpack": "^8.0.1",
@@ -80,6 +86,7 @@
     "@typescript-eslint/utils": "^8.40.0",
     "angular-eslint": "^20.3.0",
     "eslint": "^9.18.0",
+    "eslint-plugin-playwright": "^1.6.2",
     "jsonc-eslint-parser": "^2.1.0",
     "nx": "^21.6.4",
     "prettier": "^2.6.2",
