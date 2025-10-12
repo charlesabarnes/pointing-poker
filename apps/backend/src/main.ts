@@ -2,11 +2,13 @@ import express from 'express';
 import * as http from 'http';
 import * as WebSocket from 'ws';
 import { join } from 'path';
-import { Message, MessageType, ExtWebSocket, MESSAGE_TYPES, SPECIAL_CONTENT } from 'shared';
+import { Message, ExtWebSocket, MESSAGE_TYPES, SPECIAL_CONTENT } from 'shared';
 import { broadcastToSession, sendToClient, getSessionClients } from './utils/broadcast';
 import { SessionManager } from './session/session-manager';
 import { loadConfig, validateConfig } from './config/environment';
 import { logger } from './utils/logger';
+import { handleMessage } from './handlers/message-handlers';
+import { handleNameChange } from './utils/name-change';
 
 // Load and validate configuration
 const config = loadConfig();
@@ -25,7 +27,7 @@ app.use(
 );
 
 // All regular routes use the index.html
-app.get('/*path', (req: express.Request, res: express.Response) => {
+app.get('*', (_req: express.Request, res: express.Response) => {
   res.sendFile(join(DIST_FOLDER, 'index.html'));
 });
 
@@ -82,216 +84,17 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
     // Log message
     logger.logMessage(message.type, extWs.session, message.sender);
 
-    // Detect name change (same fingerprint, different name)
-    if (extWs.fingerprint === message.fingerprint &&
-        extWs.name &&
-        extWs.name !== message.sender) {
-      logger.info('User changed name', {
-        oldName: extWs.name,
-        newName: message.sender,
-        fingerprint: message.fingerprint,
-        sessionId: extWs.session
-      });
+    // Detect and handle name change
+    handleNameChange(wss, extWs, message);
 
-      // Broadcast name change to all clients in session
-      broadcastToSession(
-        wss,
-        extWs.session,
-        message.sender,
-        message.sender, // new name in content
-        MESSAGE_TYPES.NAME_CHANGED,
-        message.fingerprint
-      );
-    }
-
+    // Update WebSocket state
     extWs.name = message.sender;
     extWs.fingerprint = message.fingerprint;
     extWs.lastActivity = Date.now();
     sessionManager.updateSessionActivity(extWs.session);
 
-    switch (message.type) {
-      case MESSAGE_TYPES.CHAT:
-        broadcastToSession(
-          wss,
-          extWs.session,
-          message.sender,
-          message.content,
-          MESSAGE_TYPES.CHAT,
-          message.fingerprint
-        );
-        break;
-
-      case MESSAGE_TYPES.DESCRIPTION:
-        broadcastToSession(
-          wss,
-          extWs.session,
-          message.sender,
-          message.content,
-          MESSAGE_TYPES.DESCRIPTION,
-          message.fingerprint
-        );
-        break;
-
-      case MESSAGE_TYPES.HEARTBEAT:
-        // Just mark client as active, no need to broadcast
-        extWs.isAlive = true;
-        extWs.lastActivity = Date.now();
-        sessionManager.updateSessionActivity(extWs.session);
-        break;
-
-      case MESSAGE_TYPES.STATUS_AFK:
-        broadcastToSession(
-          wss,
-          extWs.session,
-          message.sender,
-          message.content,
-          MESSAGE_TYPES.STATUS_AFK,
-          message.fingerprint
-        );
-        break;
-
-      case MESSAGE_TYPES.STATUS_ONLINE:
-        broadcastToSession(
-          wss,
-          extWs.session,
-          message.sender,
-          message.content,
-          MESSAGE_TYPES.STATUS_ONLINE,
-          message.fingerprint
-        );
-        break;
-
-      case MESSAGE_TYPES.USER_LEFT:
-        // Broadcast user left to all clients in session (exclude sender)
-        broadcastToSession(
-          wss,
-          extWs.session,
-          message.sender,
-          message.content,
-          MESSAGE_TYPES.USER_LEFT,
-          message.fingerprint,
-          ws
-        );
-        // Close the connection
-        ws.close();
-        break;
-
-      case MESSAGE_TYPES.JOIN:
-        broadcastToSession(
-          wss,
-          extWs.session,
-          message.sender,
-          message.content,
-          MESSAGE_TYPES.JOIN,
-          message.fingerprint
-        );
-        break;
-
-      case MESSAGE_TYPES.POINTS:
-        if (message.content === SPECIAL_CONTENT.CLEAR_VOTES) {
-          // Backwards compatibility: Handle old 'ClearVotes' message
-          // TODO: Remove this after all clients are updated to use MESSAGE_TYPES.CLEAR_VOTES
-          sessionManager.clearVotes(extWs.session);
-
-          // Clear content for all connected clients and broadcast
-          const sessionClients = getSessionClients(wss, extWs.session);
-          sessionClients.forEach((client) => {
-            if (client.content !== SPECIAL_CONTENT.DISCONNECT) {
-              client.content = undefined;
-            }
-          });
-
-          // Broadcast cleared state to all clients
-          sessionClients.forEach((client) => {
-            broadcastToSession(
-              wss,
-              extWs.session,
-              client.name || 'Unknown',
-              undefined,
-              MESSAGE_TYPES.POINTS,
-              client.fingerprint
-            );
-          });
-        } else if (message.content === SPECIAL_CONTENT.SPECTATE) {
-          // User entering spectator mode
-          extWs.content = SPECIAL_CONTENT.DISCONNECT;
-          broadcastToSession(
-            wss,
-            extWs.session,
-            extWs.name || 'Unknown',
-            SPECIAL_CONTENT.DISCONNECT,
-            MESSAGE_TYPES.DISCONNECT,
-            extWs.fingerprint
-          );
-        } else if (message.content === undefined) {
-          // Check if this is a reconnection with a stored vote
-          if (message.fingerprint && !sessionManager.areVotesRevealed(extWs.session)) {
-            const restoredVote = sessionManager.getVote(extWs.session, message.fingerprint);
-            if (restoredVote !== undefined) {
-              // Restore their previous vote
-              extWs.content = restoredVote;
-              broadcastToSession(
-                wss,
-                extWs.session,
-                message.sender,
-                restoredVote,
-                MESSAGE_TYPES.POINTS,
-                message.fingerprint
-              );
-            }
-          }
-        } else {
-          // Regular vote - store and broadcast
-          extWs.content = message.content;
-
-          if (message.fingerprint) {
-            sessionManager.setVote(extWs.session, message.fingerprint, message.content);
-          }
-
-          broadcastToSession(
-            wss,
-            extWs.session,
-            message.sender,
-            message.content,
-            MESSAGE_TYPES.POINTS,
-            message.fingerprint
-          );
-        }
-        break;
-
-      case MESSAGE_TYPES.SHOW_VOTES:
-        // Mark session as revealed (votes shown)
-        sessionManager.revealVotes(extWs.session);
-
-        // Broadcast show votes action to all clients in session
-        broadcastToSession(
-          wss,
-          extWs.session,
-          message.sender,
-          message.content,
-          MESSAGE_TYPES.SHOW_VOTES,
-          message.fingerprint
-        );
-        break;
-
-      case MESSAGE_TYPES.CLEAR_VOTES:
-        // Clear persistent vote storage for this session
-        sessionManager.clearVotes(extWs.session);
-
-        // Broadcast clear votes action to all clients in session
-        broadcastToSession(
-          wss,
-          extWs.session,
-          message.sender,
-          message.content,
-          MESSAGE_TYPES.CLEAR_VOTES,
-          message.fingerprint
-        );
-        break;
-
-      default:
-        break;
-    }
+    // Route message to appropriate handler
+    handleMessage(wss, ws, extWs, message, sessionManager);
   });
 
   // Handle errors
