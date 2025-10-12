@@ -5,6 +5,7 @@
 @use 'variables' as *;
 @use 'mixins' as *;
 @use 'overrides' as overrides;
+@use 'toast' as *;
 
 // Include the common styles for Angular Material
 @include mat.core();

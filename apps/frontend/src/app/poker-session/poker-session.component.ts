@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { PokerWebSocketService } from '../services/poker-websocket.service';
 import { PokerSessionStateService } from '../services/poker-session-state.service';
@@ -9,6 +9,7 @@ import { VotingPanelComponent } from './voting-panel/voting-panel.component';
 import { ResultsChartComponent } from './results-chart/results-chart.component';
 import { ParticipantsListComponent } from './participants-list/participants-list.component';
 import { ChatPanelComponent } from './chat-panel/chat-panel.component';
+import { ToastNotificationService } from '../services/toast-notification.service';
 
 @Component({
     selector: 'app-poker-session',
@@ -32,8 +33,10 @@ export class PokerSessionComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private wsService: PokerWebSocketService,
-    public stateService: PokerSessionStateService
+    public stateService: PokerSessionStateService,
+    private toastService: ToastNotificationService
   ) {
     // Effect to sync selected value when current user's points change
     effect(() => {
@@ -61,24 +64,56 @@ export class PokerSessionComponent implements OnInit, OnDestroy {
   }
 
   public ngOnInit() {
-    this.id = this.route.snapshot.paramMap.get('id');
-    this.name = sessionStorage.getItem('POKER_NAME');
-    if (this.name) {
+    try {
+      this.id = this.route.snapshot.paramMap.get('id');
+      this.name = sessionStorage.getItem('POKER_NAME');
+
+      // Validate session parameters
+      if (!this.id) {
+        this.toastService.error('Invalid session ID');
+        this.router.navigate(['/']);
+        return;
+      }
+
+      if (!this.name) {
+        this.toastService.warning('Please set your name to join the session');
+        this.router.navigate(['/']);
+        return;
+      }
+
       // Connect to WebSocket
       this.wsService.connect(this.id, this.name);
+    } catch (error) {
+      console.error('Failed to initialize poker session:', error);
+      this.toastService.error('Failed to initialize session. Please try again.');
+      this.router.navigate(['/']);
     }
   }
 
   public ngOnDestroy() {
-    // Disconnect from WebSocket
-    this.wsService.disconnect();
+    try {
+      // Disconnect from WebSocket
+      this.wsService.disconnect();
+    } catch (error) {
+      console.error('Error during disconnect:', error);
+    }
   }
 
   public onClearVotes(): void {
-    this.stateService.clearVotes();
+    try {
+      this.stateService.clearVotes();
+    } catch (error) {
+      console.error('Failed to clear votes:', error);
+      this.toastService.error('Failed to clear votes. Please try again.');
+    }
   }
 
   public onShowVotes(): void {
-    this.stateService.forceShowValues();
+    try {
+      this.stateService.forceShowValues();
+    } catch (error) {
+      console.error('Failed to show votes:', error);
+      this.toastService.error('Failed to show votes. Please try again.');
+    }
   }
 }

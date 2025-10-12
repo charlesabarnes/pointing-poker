@@ -2,6 +2,9 @@
   <span class="app-title">Pointing Poker</span>
   <span class="name">{{ name }}</span>
   <span class="spacer"></span>
+  @if (showConnectionStatus) {
+    <app-connection-status></app-connection-status>
+  }
   <button mat-icon-button
           [cdkCopyToClipboard]="currentUrl"
           (click)="copiedToClipboard()"

@@ -1,23 +1,36 @@
-import { Injectable, signal, computed, OnDestroy } from '@angular/core';
+import { Injectable, signal, OnDestroy, inject } from '@angular/core';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { Subject, Observable } from 'rxjs';
 import { Message, MessageType, UserActivity, PointValues, MESSAGE_TYPES, SPECIAL_CONTENT } from 'shared';
 import { UserFingerprintService } from './user-fingerprint.service';
 import { UserActivityService } from './user-activity.service';
+import { ToastNotificationService } from './toast-notification.service';
+
+export enum ConnectionState {
+  DISCONNECTED = 'disconnected',
+  CONNECTING = 'connecting',
+  CONNECTED = 'connected',
+  RECONNECTING = 'reconnecting',
+  ERROR = 'error'
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class PokerWebSocketService implements OnDestroy {
-  private _webSocket: WebSocketSubject<any>;
+  private _webSocket: WebSocketSubject<any> | null = null;
   private _messageSubject = new Subject<Message>();
   private heartbeatWorker: Worker | null = null;
   private activityInterval: any;
   private statusCheckInterval: any;
+  private reconnectTimeout: any;
+  private reconnectAttempts = 0;
+  private messageQueue: Message[] = [];
 
   private sessionId: string;
   private userName: string;
   private userFingerprint: string;
+  private toastService = inject(ToastNotificationService);
 
   // Public signals for component state
   // NOTE: All keyed by FINGERPRINT, not username
@@ -28,12 +41,17 @@ export class PokerWebSocketService implements OnDestroy {
   public lastDescription = signal<string>('');
   public newUserJoined = signal<boolean>(false);
   public recentJoinedUser = signal<string>('');
+  public connectionState = signal<ConnectionState>(ConnectionState.DISCONNECTED);
 
   // Constants
   private readonly OFFLINE_THRESHOLD = 3600000; // 1 hour for true disconnect
   private readonly AFK_THRESHOLD = 120000; // 2 minutes for AFK
   private readonly HEARTBEAT_INTERVAL = 15000; // 15 seconds
   private readonly STATUS_CHECK_INTERVAL = 10000; // 10 seconds
+  private readonly MAX_RECONNECT_ATTEMPTS = 10;
+  private readonly RECONNECT_BASE_DELAY = 1000; // 1 second base delay
+  private readonly MAX_RECONNECT_DELAY = 30000; // 30 seconds max delay
+  private readonly MESSAGE_QUEUE_SIZE = 50; // Max queued messages
 
   // Track current status to avoid redundant sends
   private currentStatus: 'online' | 'afk' | 'offline' = 'online';
@@ -59,29 +77,76 @@ export class PokerWebSocketService implements OnDestroy {
   public connect(sessionId: string, userName: string): void {
     this.sessionId = sessionId;
     this.userName = userName;
+    this.reconnectAttempts = 0;
+    this.createWebSocketConnection();
+  }
 
-    // Create WebSocket connection
-    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-    const host = location.host.replace('4200', '4000');
-    const url = `${protocol}://${host}/?session=${sessionId}`;
+  /**
+   * Create or recreate WebSocket connection
+   */
+  private createWebSocketConnection(): void {
+    // Clear any pending reconnect timeout
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
 
-    this._webSocket = webSocket(url);
+    // Set connection state
+    const isReconnecting = this.connectionState() !== ConnectionState.DISCONNECTED;
+    this.connectionState.set(isReconnecting ? ConnectionState.RECONNECTING : ConnectionState.CONNECTING);
 
-    // Subscribe to incoming messages
-    this._webSocket.subscribe({
-      next: (message: Message) => this.handleMessage(message),
-      error: (err) => console.error('WebSocket error:', err),
-      complete: () => console.log('WebSocket connection closed')
-    });
+    try {
+      // Create WebSocket connection
+      const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+      const host = location.host.replace('4200', '4000');
+      const url = `${protocol}://${host}/?session=${this.sessionId}`;
 
-    // Send initial message with fingerprint
-    this._webSocket.next(
-      new Message(userName, undefined, 'points', sessionId, Date.now(), this.userFingerprint)
-    );
+      this._webSocket = webSocket({
+        url,
+        closeObserver: {
+          next: () => this.handleConnectionClosed()
+        },
+        openObserver: {
+          next: () => this.handleConnectionOpened()
+        }
+      });
+
+      // Subscribe to incoming messages
+      this._webSocket.subscribe({
+        next: (message: Message) => this.handleMessage(message),
+        error: (err) => this.handleConnectionError(err),
+        complete: () => this.handleConnectionClosed()
+      });
+
+      // Send initial message with fingerprint
+      this._webSocket.next(
+        new Message(this.userName, undefined, 'points', this.sessionId, Date.now(), this.userFingerprint)
+      );
+    } catch (error) {
+      console.error('Failed to create WebSocket connection:', error);
+      this.handleConnectionError(error);
+    }
+  }
+
+  /**
+   * Handle successful connection
+   */
+  private handleConnectionOpened(): void {
+    console.log('WebSocket connection opened');
+    this.connectionState.set(ConnectionState.CONNECTED);
+    this.reconnectAttempts = 0;
+
+    // Show success toast if this was a reconnection
+    if (this.reconnectAttempts > 0) {
+      this.toastService.success('Reconnected to server');
+    }
 
     // Setup intervals
     this.setupHeartbeat();
     this.setupStatusMonitor();
+
+    // Process queued messages
+    this.processMessageQueue();
 
     // Announce user has joined
     setTimeout(() => {
@@ -90,14 +155,95 @@ export class PokerWebSocketService implements OnDestroy {
   }
 
   /**
-   * Send a message through the WebSocket
+   * Handle connection error
    */
-  public send(content: string | number, type: MessageType = MESSAGE_TYPES.POINTS): void {
-    if (!this._webSocket) {
-      console.error('WebSocket not connected');
+  private handleConnectionError(error: any): void {
+    console.error('WebSocket error:', error);
+    this.connectionState.set(ConnectionState.ERROR);
+
+    // Show error toast
+    if (this.reconnectAttempts === 0) {
+      this.toastService.error('Failed to connect to server');
+    }
+
+    // Attempt to reconnect
+    this.attemptReconnect();
+  }
+
+  /**
+   * Handle connection closed
+   */
+  private handleConnectionClosed(): void {
+    console.log('WebSocket connection closed');
+
+    // Only show toast if this was an unexpected disconnect (not a manual disconnect)
+    if (this.connectionState() !== ConnectionState.DISCONNECTED) {
+      this.connectionState.set(ConnectionState.ERROR);
+      this.toastService.warning('Connection lost. Reconnecting...');
+      this.attemptReconnect();
+    }
+  }
+
+  /**
+   * Attempt to reconnect with exponential backoff
+   */
+  private attemptReconnect(): void {
+    // Don't reconnect if manually disconnected or max attempts reached
+    if (
+      this.connectionState() === ConnectionState.DISCONNECTED ||
+      this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS
+    ) {
+      if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
+        this.connectionState.set(ConnectionState.ERROR);
+        this.toastService.error('Failed to reconnect. Please refresh the page.');
+      }
       return;
     }
 
+    this.reconnectAttempts++;
+
+    // Calculate delay with exponential backoff
+    const delay = Math.min(
+      this.RECONNECT_BASE_DELAY * Math.pow(2, this.reconnectAttempts - 1),
+      this.MAX_RECONNECT_DELAY
+    );
+
+    console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS})`);
+
+    this.reconnectTimeout = setTimeout(() => {
+      this.createWebSocketConnection();
+    }, delay);
+  }
+
+  /**
+   * Process queued messages after reconnection
+   */
+  private processMessageQueue(): void {
+    if (this.messageQueue.length === 0) {
+      return;
+    }
+
+    console.log(`Processing ${this.messageQueue.length} queued messages`);
+
+    while (this.messageQueue.length > 0) {
+      const message = this.messageQueue.shift();
+      if (message && this._webSocket) {
+        try {
+          this._webSocket.next(message);
+        } catch (error) {
+          console.error('Failed to send queued message:', error);
+          // Re-queue if failed
+          this.messageQueue.unshift(message);
+          break;
+        }
+      }
+    }
+  }
+
+  /**
+   * Send a message through the WebSocket
+   */
+  public send(content: string | number, type: MessageType = MESSAGE_TYPES.POINTS): void {
     const message = new Message(
       this.userName,
       content,
@@ -106,21 +252,78 @@ export class PokerWebSocketService implements OnDestroy {
       Date.now(),
       this.userFingerprint
     );
-    this._webSocket.next(message);
+
+    // Check connection state
+    const state = this.connectionState();
+
+    if (!this._webSocket || state === ConnectionState.DISCONNECTED || state === ConnectionState.ERROR) {
+      console.warn('WebSocket not connected, queueing message');
+
+      // Queue non-heartbeat messages for later
+      if (type !== MESSAGE_TYPES.HEARTBEAT) {
+        this.queueMessage(message);
+      }
+
+      return;
+    }
+
+    // Try to send the message
+    try {
+      this._webSocket.next(message);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+
+      // Queue for retry if not a heartbeat
+      if (type !== MESSAGE_TYPES.HEARTBEAT) {
+        this.queueMessage(message);
+        this.toastService.error('Failed to send message. Will retry when reconnected.');
+      }
+    }
+  }
+
+  /**
+   * Queue a message for sending later
+   */
+  private queueMessage(message: Message): void {
+    // Prevent queue from growing too large
+    if (this.messageQueue.length >= this.MESSAGE_QUEUE_SIZE) {
+      console.warn('Message queue full, dropping oldest message');
+      this.messageQueue.shift();
+    }
+
+    this.messageQueue.push(message);
   }
 
   /**
    * Disconnect and cleanup
    */
   public disconnect(): void {
+    // Set state to disconnected to prevent reconnection attempts
+    this.connectionState.set(ConnectionState.DISCONNECTED);
+
+    // Clear reconnect timeout
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+
+    // Stop heartbeat worker
     this.stopHeartbeatWorker();
 
+    // Clear intervals
     if (this.statusCheckInterval) {
       clearInterval(this.statusCheckInterval);
+      this.statusCheckInterval = null;
     }
+
+    // Close WebSocket
     if (this._webSocket) {
       this._webSocket.complete();
+      this._webSocket = null;
     }
+
+    // Clear message queue
+    this.messageQueue = [];
   }
 
   /**

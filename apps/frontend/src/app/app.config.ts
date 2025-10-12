@@ -1,5 +1,6 @@
 import {
   ApplicationConfig,
+  ErrorHandler,
   provideBrowserGlobalErrorListeners,
   provideZoneChangeDetection,
 } from '@angular/core';
@@ -9,6 +10,7 @@ import {
   provideClientHydration,
   withEventReplay,
 } from '@angular/platform-browser';
+import { GlobalErrorHandler } from './services/global-error-handler.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -16,5 +18,9 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(appRoutes),
+    {
+      provide: ErrorHandler,
+      useClass: GlobalErrorHandler
+    }
   ],
 };

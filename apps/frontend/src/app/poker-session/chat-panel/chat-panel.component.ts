@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faComments, faPaperPlane, faUserPlus } from '@fortawesome/pro-solid-svg-icons';
 import { PokerWebSocketService } from '../../services/poker-websocket.service';
+import { ToastNotificationService } from '../../services/toast-notification.service';
 
 @Component({
   selector: 'app-chat-panel',
@@ -36,7 +37,10 @@ export class ChatPanelComponent implements OnInit, AfterViewChecked {
   // ViewChild for auto-scroll
   @ViewChild('scroller', { static: false }) private scroller: ElementRef;
 
-  constructor(public wsService: PokerWebSocketService) {}
+  constructor(
+    public wsService: PokerWebSocketService,
+    private toastService: ToastNotificationService
+  ) {}
 
   ngOnInit(): void {
     this.createChatForm();
@@ -57,17 +61,25 @@ export class ChatPanelComponent implements OnInit, AfterViewChecked {
   }
 
   public sendChat(): void {
-    const message = this.chatForm.value.message;
-    if (message && message.trim()) {
-      this.wsService.send(message, 'chat');
-      this.chatForm.setValue({ message: '' });
-      this.scrollToBottom();
+    try {
+      const message = this.chatForm.value.message;
+      if (message && message.trim()) {
+        this.wsService.send(message, 'chat');
+        this.chatForm.setValue({ message: '' });
+        this.scrollToBottom();
+      }
+    } catch (error) {
+      console.error('Failed to send chat message:', error);
+      this.toastService.error('Failed to send chat message. Please try again.');
     }
   }
 
   private scrollToBottom(): void {
     try {
       this.scroller.nativeElement.scrollTop = this.scroller.nativeElement.scrollHeight;
-    } catch (err) { }
+    } catch (err) {
+      // Silently fail - this is non-critical for UX
+      console.warn('Failed to scroll chat to bottom:', err);
+    }
   }
 }
