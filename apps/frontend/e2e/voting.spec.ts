@@ -77,9 +77,10 @@ test.describe('Voting Functionality', () => {
     await clearVotes(page);
     await page.waitForTimeout(500);
 
-    // Results chart should not be visible after clearing
-    const resultsChart = page.locator('app-results-chart');
-    await expect(resultsChart).not.toBeVisible();
+    // Results chart canvas should not be visible after clearing
+    // (the component wrapper is always present, but the canvas is hidden)
+    const chartCanvas = page.locator('app-results-chart canvas[basechart]');
+    await expect(chartCanvas).not.toBeVisible();
   });
 
   test('should show story controls', async ({ page }) => {

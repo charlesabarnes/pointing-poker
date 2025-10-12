@@ -9,7 +9,8 @@
           [cdkCopyToClipboard]="currentUrl"
           (click)="copiedToClipboard()"
           matTooltip="Copy Session Link"
-          matTooltipPosition="below">
+          matTooltipPosition="below"
+          data-testid="copy-session-url">
     <fa-icon [icon]="faCopy"></fa-icon>
   </button>
   <button mat-icon-button

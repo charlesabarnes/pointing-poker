@@ -52,7 +52,7 @@ test.describe('Session Creation', () => {
     await page.waitForURL(/\/session\/.+/);
 
     // Find and click the copy button
-    const copyButton = page.locator('button[cdkCopyToClipboard]');
+    const copyButton = page.locator('[data-testid="copy-session-url"]');
     await expect(copyButton).toBeVisible();
     await copyButton.click();
 

@@ -1,25 +1,26 @@
 <div class="chart-container" role="region" aria-label="Voting Results Visualization">
-  <div *ngIf="!stateService.showChart()"
-       class="waiting-for-votes"
-       role="status"
-       aria-live="polite">
-    <fa-icon [icon]="faClock" aria-hidden="true"></fa-icon>
-    <h3>Waiting for votes...</h3>
-    <p>Point values will appear here once everyone has voted.</p>
-  </div>
-  <canvas *ngIf="stateService.showChart()"
-    baseChart
-    [data]="{
-      labels: chartLabels(),
-      datasets: [{
-        data: chartData(),
-        backgroundColor: colors
-      }]
-    }"
-    [options]="chartOptions"
-    [type]="chartType"
-    [plugins]="plugins"
-    role="img"
-    [attr.aria-label]="getChartAccessibleDescription()">
-  </canvas>
+  @if (!stateService.showChart()) {
+    <div class="waiting-for-votes"
+         role="status"
+         aria-live="polite">
+      <fa-icon [icon]="faClock" aria-hidden="true"></fa-icon>
+      <h3>Waiting for votes...</h3>
+      <p>Point values will appear here once everyone has voted.</p>
+    </div>
+  } @else {
+    <canvas baseChart
+      [data]="{
+        labels: chartLabels(),
+        datasets: [{
+          data: chartData(),
+          backgroundColor: colors
+        }]
+      }"
+      [options]="chartOptions"
+      [type]="chartType"
+      [plugins]="plugins"
+      role="img"
+      [attr.aria-label]="getChartAccessibleDescription()">
+    </canvas>
+  }
 </div>

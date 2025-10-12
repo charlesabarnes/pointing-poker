@@ -20,6 +20,7 @@ export class PokerSessionStateService {
   public isSpectator = signal<boolean>(false);
   public confettiShot = signal<boolean>(false);
   public selectedPointValue = signal<number | undefined>(undefined);
+  public description = signal<string>('');
 
   private destroyRef = inject(DestroyRef);
 
@@ -36,6 +37,9 @@ export class PokerSessionStateService {
         } else if (message.type === MESSAGE_TYPES.CLEAR_VOTES) {
           this.showValuesForced.set(false);
           this.confettiShot.set(false);
+        } else if (message.type === MESSAGE_TYPES.DESCRIPTION) {
+          // Sync description from server
+          this.description.set(String(message.content || ''));
         }
       });
   }
@@ -135,6 +139,14 @@ export class PokerSessionStateService {
    */
   public resetSelectedValue(): void {
     this.selectedPointValue.set(0);
+  }
+
+  /**
+   * Update story description
+   */
+  public updateDescription(value: string): void {
+    this.description.set(value);
+    this.wsService.send(value, 'description');
   }
 
   /**

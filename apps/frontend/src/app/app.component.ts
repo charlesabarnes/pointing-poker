@@ -54,7 +54,9 @@ export class AppComponent implements OnInit {
       sessionStorage.setItem(POKER_NAME, this.name);
     } else {
       // Check if trying to navigate to a session without a name
-      const currentUrl = this.router.url;
+      // Use window.location.pathname to get the actual current URL,
+      // since this.router.url might not be updated yet during ngOnInit
+      const currentUrl = window.location.pathname;
       const sessionMatch = currentUrl.match(/\/session\/([^\/\?]+)/);
 
       if (sessionMatch) {

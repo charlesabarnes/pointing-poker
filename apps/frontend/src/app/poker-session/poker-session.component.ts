@@ -102,22 +102,4 @@ export class PokerSessionComponent implements OnInit, OnDestroy {
       console.error('Error during disconnect:', error);
     }
   }
-
-  public onClearVotes(): void {
-    try {
-      this.stateService.clearVotes();
-    } catch (error) {
-      console.error('Failed to clear votes:', error);
-      this.toastService.error('Failed to clear votes. Please try again.');
-    }
-  }
-
-  public onShowVotes(): void {
-    try {
-      this.stateService.forceShowValues();
-    } catch (error) {
-      console.error('Failed to show votes:', error);
-      this.toastService.error('Failed to show votes. Please try again.');
-    }
-  }
 }

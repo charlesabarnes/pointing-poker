@@ -180,7 +180,7 @@ test.describe('Multi-User Scenarios', () => {
 
       // Verify the chart is showing results (chart canvas should be visible)
       for (let i = 0; i < users.length; i++) {
-        const chartCanvas = pages[i].locator('canvas');
+        const chartCanvas = pages[i].locator('canvas[basechart]');
         await expect(chartCanvas).toBeVisible();
       }
 

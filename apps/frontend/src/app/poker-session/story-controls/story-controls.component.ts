@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, effect } from '@angular/core';
+import { Component, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,7 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faStickyNote, faTimes, faEye } from '@fortawesome/pro-solid-svg-icons';
-import { PokerWebSocketService } from '../../services/poker-websocket.service';
+import { PokerSessionStateService } from '../../services/poker-session-state.service';
 
 @Component({
   selector: 'app-story-controls',
@@ -31,14 +31,10 @@ export class StoryControlsComponent implements OnInit {
   // Form
   public form: FormGroup;
 
-  // Outputs
-  @Output() clearVotes = new EventEmitter<void>();
-  @Output() showVotes = new EventEmitter<void>();
-
-  constructor(private wsService: PokerWebSocketService) {
-    // Effect to sync description from service to form
+  constructor(public stateService: PokerSessionStateService) {
+    // Effect to sync description from state service to form
     effect(() => {
-      const description = this.wsService.lastDescription();
+      const description = this.stateService.description();
       if (description !== this.form?.value.storyDescription) {
         this.form?.setValue({ storyDescription: description }, { emitEvent: false });
       }
@@ -56,17 +52,17 @@ export class StoryControlsComponent implements OnInit {
 
     // Listen for changes to the story description
     this.form.get('storyDescription').valueChanges.subscribe(value => {
-      if (value !== this.wsService.lastDescription()) {
-        this.wsService.send(value, 'description');
+      if (value !== this.stateService.description()) {
+        this.stateService.updateDescription(value);
       }
     });
   }
 
   public onClearVotes(): void {
-    this.clearVotes.emit();
+    this.stateService.clearVotes();
   }
 
   public onShowVotes(): void {
-    this.showVotes.emit();
+    this.stateService.forceShowValues();
   }
 }

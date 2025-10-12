@@ -8,13 +8,14 @@
 
   <mat-card-content>
     <!-- User join notification with aria-live for screen readers -->
-    <div *ngIf="wsService.newUserJoined()"
-         class="user-joined-notification"
-         role="status"
-         aria-live="polite">
-      <fa-icon [icon]="faUserPlus" aria-hidden="true"></fa-icon>
-      <span>{{ wsService.recentJoinedUser() }} has joined the session</span>
-    </div>
+    @if (wsService.newUserJoined()) {
+      <div class="user-joined-notification"
+           role="status"
+           aria-live="polite">
+        <fa-icon [icon]="faUserPlus" aria-hidden="true"></fa-icon>
+        <span>{{ wsService.recentJoinedUser() }} has joined the session</span>
+      </div>
+    }
 
     <!-- Participants table with proper semantics -->
     <div class="point-list" role="table" aria-labelledby="participants-title">
@@ -32,53 +33,60 @@
       </div>
 
       <!-- Table rows -->
-      <ng-container *ngFor="let user of stateService.users()">
-        <div class="user-info"
-             *ngIf="wsService.pointValues()[user.fingerprint] !== 'disconnect'"
-             role="row"
-             [attr.aria-current]="wsService.isCurrentUser(user.fingerprint) ? 'true' : null"
-             [ngClass]="{'current-user': wsService.isCurrentUser(user.fingerprint)}">
-          <div class="player-name" role="cell">
-            <span>{{user.displayName}}</span>
-            <fa-icon *ngIf="wsService.isCurrentUser(user.fingerprint)"
-                     [icon]="faUserCircle"
-                     aria-label="Current user"
-                     title="You">
-            </fa-icon>
-            <span *ngIf="wsService.isCurrentUser(user.fingerprint)" class="sr-only">(You)</span>
-          </div>
-          <div class="status-indicator" role="cell">
-            <span class="status-dot"
-              [ngClass]="{
-                'status-online': wsService.userActivity()[user.fingerprint]?.status === 'online',
-                'status-afk': wsService.userActivity()[user.fingerprint]?.status === 'afk',
-                'status-offline': wsService.userActivity()[user.fingerprint]?.status === 'offline' || !wsService.userActivity()[user.fingerprint]
-              }"
-              role="img"
-              [attr.aria-label]="(wsService.userActivity()[user.fingerprint]?.status || 'offline') + ' status indicator'">
-            </span>
-            <span class="status-text">{{ wsService.userActivity()[user.fingerprint]?.status || 'offline' }}</span>
-          </div>
-          <div class="point-value" role="cell">
-            <span *ngIf="stateService.showValues()"
-                  class="vote-value"
-                  [attr.aria-label]="'Vote: ' + wsService.pointValues()[user.fingerprint]">
-              {{wsService.pointValues()[user.fingerprint]}}
-            </span>
-            <div *ngIf="!stateService.showValues()" class="vote-status">
-              <fa-icon
-                [icon]="wsService.pointValues()[user.fingerprint] ? faCheckCircle : faCircle"
+      @for (user of stateService.users(); track user.fingerprint) {
+        @if (wsService.pointValues()[user.fingerprint] !== 'disconnect') {
+          <div class="user-info"
+               role="row"
+               [attr.aria-current]="wsService.isCurrentUser(user.fingerprint) ? 'true' : null"
+               [ngClass]="{'current-user': wsService.isCurrentUser(user.fingerprint)}">
+            <div class="player-name" role="cell">
+              <span>{{user.displayName}}</span>
+              @if (wsService.isCurrentUser(user.fingerprint)) {
+                <fa-icon [icon]="faUserCircle"
+                         aria-label="Current user"
+                         title="You">
+                </fa-icon>
+              }
+              @if (wsService.isCurrentUser(user.fingerprint)) {
+                <span class="sr-only">(You)</span>
+              }
+            </div>
+            <div class="status-indicator" role="cell">
+              <span class="status-dot"
                 [ngClass]="{
-                  'has-voted': wsService.pointValues()[user.fingerprint],
-                  'no-vote': !wsService.pointValues()[user.fingerprint]
+                  'status-online': wsService.userActivity()[user.fingerprint]?.status === 'online',
+                  'status-afk': wsService.userActivity()[user.fingerprint]?.status === 'afk',
+                  'status-offline': wsService.userActivity()[user.fingerprint]?.status === 'offline' || !wsService.userActivity()[user.fingerprint]
                 }"
-                aria-hidden="true">
-              </fa-icon>
-              <span>{{ wsService.pointValues()[user.fingerprint] ? 'Voted' : 'Not voted' }}</span>
+                role="img"
+                [attr.aria-label]="(wsService.userActivity()[user.fingerprint]?.status || 'offline') + ' status indicator'">
+              </span>
+              <span class="status-text">{{ wsService.userActivity()[user.fingerprint]?.status || 'offline' }}</span>
+            </div>
+            <div class="point-value" role="cell">
+              @if (stateService.showValues()) {
+                <span class="vote-value"
+                      [attr.aria-label]="'Vote: ' + wsService.pointValues()[user.fingerprint]">
+                  {{wsService.pointValues()[user.fingerprint]}}
+                </span>
+              }
+              @if (!stateService.showValues()) {
+                <div class="vote-status">
+                  <fa-icon
+                    [icon]="wsService.pointValues()[user.fingerprint] ? faCheckCircle : faCircle"
+                    [ngClass]="{
+                      'has-voted': wsService.pointValues()[user.fingerprint],
+                      'no-vote': !wsService.pointValues()[user.fingerprint]
+                    }"
+                    aria-hidden="true">
+                  </fa-icon>
+                  <span>{{ wsService.pointValues()[user.fingerprint] ? 'Voted' : 'Not voted' }}</span>
+                </div>
+              }
             </div>
           </div>
-        </div>
-      </ng-container>
+        }
+      }
     </div>
   </mat-card-content>
 

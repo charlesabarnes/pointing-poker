@@ -3,16 +3,18 @@
     <fa-icon [icon]="faStickyNote" aria-hidden="true"></fa-icon>
     Story Description
   </h3>
-  <form [formGroup]="form" *ngIf="form" role="form" aria-labelledby="story-description-label">
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Story Description</mat-label>
-      <input matInput
-             formControlName="storyDescription"
-             placeholder="Story Description"
-             aria-label="Story Description"
-             aria-describedby="story-description-label">
-    </mat-form-field>
-  </form>
+  @if (form) {
+    <form [formGroup]="form" role="form" aria-labelledby="story-description-label">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Story Description</mat-label>
+        <input matInput
+               formControlName="storyDescription"
+               placeholder="Story Description"
+               aria-label="Story Description"
+               aria-describedby="story-description-label">
+      </mat-form-field>
+    </form>
+  }
 </div>
 
 <div class="action-buttons" role="group" aria-label="Voting Actions">
