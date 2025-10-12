@@ -2,6 +2,10 @@ import { Injectable, signal, computed, DestroyRef, inject } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PokerWebSocketService } from './poker-websocket.service';
 import { MESSAGE_TYPES } from 'shared';
+import { create } from 'canvas-confetti';
+
+// Confetti canvas
+const createConfettiCanvas = create(undefined, { useWorker: true, resize: true });
 
 /**
  * Manages UI-only state for the poker session
@@ -27,6 +31,8 @@ export class PokerSessionStateService {
       .subscribe(message => {
         if (message.type === MESSAGE_TYPES.SHOW_VOTES) {
           this.showValuesForced.set(true);
+          // Trigger confetti if there's consensus when votes are shown
+          this.checkAndTriggerConfetti();
         } else if (message.type === MESSAGE_TYPES.CLEAR_VOTES) {
           this.showValuesForced.set(false);
           this.confettiShot.set(false);
@@ -129,5 +135,43 @@ export class PokerSessionStateService {
    */
   public resetSelectedValue(): void {
     this.selectedPointValue.set(0);
+  }
+
+  /**
+   * Check if there's consensus (all voters have the same vote)
+   * Excludes spectators and disconnected users
+   */
+  private hasConsensus(): boolean {
+    const pointValues = this.wsService.pointValues();
+    const voteCounts: Record<string, number> = {};
+
+    // Count votes, excluding disconnects and undefined values
+    for (const fingerprint in pointValues) {
+      if (pointValues.hasOwnProperty(fingerprint)) {
+        const vote = pointValues[fingerprint];
+        if (vote !== 'disconnect' && vote !== undefined) {
+          const voteKey = String(vote);
+          voteCounts[voteKey] = (voteCounts[voteKey] || 0) + 1;
+        }
+      }
+    }
+
+    // Consensus = exactly one unique vote value with at least one voter
+    return Object.keys(voteCounts).length === 1 && Object.values(voteCounts)[0] > 0;
+  }
+
+  /**
+   * Check for consensus and trigger confetti if conditions are met
+   */
+  private checkAndTriggerConfetti(): void {
+    if (this.hasConsensus() && !this.confettiShot()) {
+      createConfettiCanvas({
+        shapes: ['square'],
+        particleCount: 100,
+        spread: 70,
+        angle: 42,
+      });
+      this.confettiShot.set(true);
+    }
   }
 }
