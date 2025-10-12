@@ -2,7 +2,7 @@ import express from 'express';
 import * as http from 'http';
 import * as WebSocket from 'ws';
 import { join } from 'path';
-import { Message, MessageType, ExtWebSocket } from 'shared';
+import { Message, MessageType, ExtWebSocket, MESSAGE_TYPES } from 'shared';
 
 // Express server
 const app = express();
@@ -55,7 +55,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         createMessage(
           extClient.name,
           extClient.content,
-          'points',
+          MESSAGE_TYPES.POINTS,
           undefined,
           undefined,
           extClient.fingerprint
@@ -88,7 +88,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
               createMessage(
                 message.sender,
                 message.sender, // new name in content
-                'name_changed',
+                MESSAGE_TYPES.NAME_CHANGED,
                 undefined,
                 Date.now(),
                 message.fingerprint
@@ -104,7 +104,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
     extWs.lastActivity = Date.now();
 
     switch (message.type) {
-      case 'chat':
+      case MESSAGE_TYPES.CHAT:
         setTimeout(() => {
           wss.clients.forEach((client: WebSocket) => {
             const extClient = client as unknown as WebSocket & ExtWebSocket;
@@ -113,7 +113,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                 createMessage(
                   message.sender,
                   message.content,
-                  'chat',
+                  MESSAGE_TYPES.CHAT,
                   undefined,
                   message.timestamp,
                   message.fingerprint
@@ -124,7 +124,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         }, 100);
         break;
 
-      case 'description':
+      case MESSAGE_TYPES.DESCRIPTION:
         setTimeout(() => {
           wss.clients.forEach((client: WebSocket) => {
             const extClient = client as unknown as WebSocket & ExtWebSocket;
@@ -133,7 +133,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                 createMessage(
                   message.sender,
                   message.content,
-                  'description',
+                  MESSAGE_TYPES.DESCRIPTION,
                   undefined,
                   message.timestamp,
                   message.fingerprint
@@ -144,13 +144,13 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         }, 100);
         break;
 
-      case 'heartbeat':
+      case MESSAGE_TYPES.HEARTBEAT:
         // Just mark client as active, no need to broadcast
         extWs.isAlive = true;
         extWs.lastActivity = Date.now();
         break;
 
-      case 'status_afk':
+      case MESSAGE_TYPES.STATUS_AFK:
         // Broadcast AFK status to all clients in session
         setTimeout(() => {
           wss.clients.forEach((client: WebSocket) => {
@@ -160,7 +160,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                 createMessage(
                   message.sender,
                   message.content,
-                  'status_afk',
+                  MESSAGE_TYPES.STATUS_AFK,
                   undefined,
                   message.timestamp,
                   message.fingerprint
@@ -171,7 +171,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         }, 100);
         break;
 
-      case 'status_online':
+      case MESSAGE_TYPES.STATUS_ONLINE:
         // Broadcast online status to all clients in session
         setTimeout(() => {
           wss.clients.forEach((client: WebSocket) => {
@@ -181,7 +181,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                 createMessage(
                   message.sender,
                   message.content,
-                  'status_online',
+                  MESSAGE_TYPES.STATUS_ONLINE,
                   undefined,
                   message.timestamp,
                   message.fingerprint
@@ -192,7 +192,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         }, 100);
         break;
 
-      case 'user_left':
+      case MESSAGE_TYPES.USER_LEFT:
         // Broadcast user left to all clients in session
         setTimeout(() => {
           wss.clients.forEach((client: WebSocket) => {
@@ -202,7 +202,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                 createMessage(
                   message.sender,
                   message.content,
-                  'user_left',
+                  MESSAGE_TYPES.USER_LEFT,
                   undefined,
                   message.timestamp,
                   message.fingerprint
@@ -215,7 +215,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         ws.close();
         break;
 
-      case 'join':
+      case MESSAGE_TYPES.JOIN:
         // Broadcast join message to all clients in the session
         setTimeout(() => {
           wss.clients.forEach((client: WebSocket) => {
@@ -225,7 +225,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                 createMessage(
                   message.sender,
                   message.content,
-                  'join',
+                  MESSAGE_TYPES.JOIN,
                   undefined,
                   message.timestamp,
                   message.fingerprint
@@ -236,7 +236,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         }, 100);
         break;
 
-      case 'points':
+      case MESSAGE_TYPES.POINTS:
         if (message.content === 'ClearVotes') {
           wss.clients.forEach((client: WebSocket) => {
             const extClient = client as unknown as WebSocket & ExtWebSocket;
@@ -253,7 +253,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                     createMessage(
                       extConnectedClient.name,
                       undefined,
-                      'points',
+                      MESSAGE_TYPES.POINTS,
                       undefined,
                       undefined,
                       extConnectedClient.fingerprint
@@ -271,7 +271,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                 createMessage(
                   extWs.name,
                   'disconnect',
-                  'disconnect',
+                  MESSAGE_TYPES.DISCONNECT,
                   undefined,
                   undefined,
                   extWs.fingerprint
@@ -290,7 +290,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                   createMessage(
                     message.sender,
                     message.content,
-                    'points',
+                    MESSAGE_TYPES.POINTS,
                     undefined,
                     message.timestamp,
                     message.fingerprint
@@ -300,6 +300,48 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
             });
           }, 100);
         }
+        break;
+
+      case MESSAGE_TYPES.SHOW_VOTES:
+        // Broadcast show votes action to all clients in session
+        setTimeout(() => {
+          wss.clients.forEach((client: WebSocket) => {
+            const extClient = client as unknown as WebSocket & ExtWebSocket;
+            if (extClient.session === extWs.session) {
+              client.send(
+                createMessage(
+                  message.sender,
+                  message.content,
+                  MESSAGE_TYPES.SHOW_VOTES,
+                  undefined,
+                  message.timestamp,
+                  message.fingerprint
+                )
+              );
+            }
+          });
+        }, 100);
+        break;
+
+      case MESSAGE_TYPES.CLEAR_VOTES:
+        // Broadcast clear votes action to all clients in session
+        setTimeout(() => {
+          wss.clients.forEach((client: WebSocket) => {
+            const extClient = client as unknown as WebSocket & ExtWebSocket;
+            if (extClient.session === extWs.session) {
+              client.send(
+                createMessage(
+                  message.sender,
+                  message.content,
+                  MESSAGE_TYPES.CLEAR_VOTES,
+                  undefined,
+                  message.timestamp,
+                  message.fingerprint
+                )
+              );
+            }
+          });
+        }, 100);
         break;
 
       default:
@@ -316,7 +358,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
           createMessage(
             extWs.name,
             'disconnect',
-            'disconnect',
+            MESSAGE_TYPES.DISCONNECT,
             undefined,
             undefined,
             extWs.fingerprint
@@ -346,7 +388,7 @@ setInterval(() => {
             createMessage(
               extWs.name,
               'disconnect',
-              'disconnect',
+              MESSAGE_TYPES.DISCONNECT,
               undefined,
               undefined,
               extWs.fingerprint
@@ -368,7 +410,7 @@ setInterval(() => {
             createMessage(
               extWs.name,
               'timeout',
-              'disconnect',
+              MESSAGE_TYPES.DISCONNECT,
               undefined,
               undefined,
               extWs.fingerprint

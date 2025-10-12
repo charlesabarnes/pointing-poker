@@ -1,3 +1,20 @@
+// Message type constants
+export const MESSAGE_TYPES: Record<string, MessageType> = {
+  CHAT: 'chat',
+  POINTS: 'points',
+  ACTION: 'action',
+  DISCONNECT: 'disconnect',
+  DESCRIPTION: 'description',
+  HEARTBEAT: 'heartbeat',
+  JOIN: 'join',
+  STATUS_AFK: 'status_afk',
+  STATUS_ONLINE: 'status_online',
+  USER_LEFT: 'user_left',
+  NAME_CHANGED: 'name_changed',
+  SHOW_VOTES: 'show_votes',
+  CLEAR_VOTES: 'clear_votes',
+} as const;
+
 export type MessageType =
   | 'chat'
   | 'points'
@@ -9,7 +26,9 @@ export type MessageType =
   | 'status_afk'
   | 'status_online'
   | 'user_left'
-  | 'name_changed';
+  | 'name_changed'
+  | 'show_votes'
+  | 'clear_votes';
 
 export class Message {
   public content: string | number | undefined;

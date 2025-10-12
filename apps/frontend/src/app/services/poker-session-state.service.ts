@@ -1,5 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { PokerWebSocketService } from './poker-websocket.service';
+import { MESSAGE_TYPES } from 'shared';
 
 /**
  * Manages UI-only state for the poker session
@@ -15,7 +16,17 @@ export class PokerSessionStateService {
   public confettiShot = signal<boolean>(false);
   public selectedPointValue = signal<number | undefined>(undefined);
 
-  constructor(private wsService: PokerWebSocketService) {}
+  constructor(private wsService: PokerWebSocketService) {
+    // Subscribe to websocket messages to sync UI state
+    this.wsService.messages$.subscribe(message => {
+      if (message.type === MESSAGE_TYPES.SHOW_VOTES) {
+        this.showValuesForced.set(true);
+      } else if (message.type === MESSAGE_TYPES.CLEAR_VOTES) {
+        this.showValuesForced.set(false);
+        this.confettiShot.set(false);
+      }
+    });
+  }
 
   /**
    * Computed signal that determines if values should be shown
@@ -59,10 +70,11 @@ export class PokerSessionStateService {
   });
 
   /**
-   * Force values to be shown
+   * Force values to be shown (broadcasts to all clients)
    */
   public forceShowValues(): void {
     this.showValuesForced.set(true);
+    this.wsService.showVotes();
   }
 
   /**

@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, OnDestroy } from '@angular/core';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { Subject, Observable } from 'rxjs';
-import { Message, MessageType, UserActivity, PointValues } from 'shared';
+import { Message, MessageType, UserActivity, PointValues, MESSAGE_TYPES } from 'shared';
 import { UserFingerprintService } from './user-fingerprint.service';
 import { UserActivityService } from './user-activity.service';
 
@@ -85,14 +85,14 @@ export class PokerWebSocketService implements OnDestroy {
 
     // Announce user has joined
     setTimeout(() => {
-      this.send('has joined the session', 'join');
+      this.send('has joined the session', MESSAGE_TYPES.JOIN);
     }, 1000);
   }
 
   /**
    * Send a message through the WebSocket
    */
-  public send(content: string | number, type: MessageType = 'points'): void {
+  public send(content: string | number, type: MessageType = MESSAGE_TYPES.POINTS): void {
     if (!this._webSocket) {
       console.error('WebSocket not connected');
       return;
@@ -153,35 +153,41 @@ export class PokerWebSocketService implements OnDestroy {
 
     // Handle different message types
     switch (res.type) {
-      case 'disconnect':
-      case 'user_left':
+      case MESSAGE_TYPES.DISCONNECT:
+      case MESSAGE_TYPES.USER_LEFT:
         this.handleDisconnect(userKey);
         break;
-      case 'points':
+      case MESSAGE_TYPES.POINTS:
         this.handlePoints(userKey, res.content);
         break;
-      case 'chat':
+      case MESSAGE_TYPES.CHAT:
         this.handleChat(res);
         break;
-      case 'description':
+      case MESSAGE_TYPES.DESCRIPTION:
         this.handleDescription(res.content as string);
         break;
-      case 'heartbeat':
+      case MESSAGE_TYPES.HEARTBEAT:
         // Activity already updated above
         break;
-      case 'status_afk':
+      case MESSAGE_TYPES.STATUS_AFK:
         this.updateUserStatus(userKey, 'afk', res.timestamp);
         break;
-      case 'status_online':
+      case MESSAGE_TYPES.STATUS_ONLINE:
         this.updateUserStatus(userKey, 'online', res.timestamp);
         break;
-      case 'join':
+      case MESSAGE_TYPES.JOIN:
         this.handleJoin(res);
         break;
-      case 'name_changed':
+      case MESSAGE_TYPES.NAME_CHANGED:
         if (res.fingerprint) {
           this.handleNameChange(res.fingerprint, res.sender);
         }
+        break;
+      case MESSAGE_TYPES.SHOW_VOTES:
+        // Handled by state service via messages$ observable
+        break;
+      case MESSAGE_TYPES.CLEAR_VOTES:
+        // Handled by state service via messages$ observable
         break;
       default:
         break;
@@ -322,7 +328,7 @@ export class PokerWebSocketService implements OnDestroy {
     if (typeof Worker === 'undefined') {
       console.warn('Web Workers not supported, using fallback setInterval');
       // Fallback to setInterval if workers not supported
-      setInterval(() => this.send('', 'heartbeat'), this.HEARTBEAT_INTERVAL);
+      setInterval(() => this.send('', MESSAGE_TYPES.HEARTBEAT), this.HEARTBEAT_INTERVAL);
       return;
     }
 
@@ -336,7 +342,7 @@ export class PokerWebSocketService implements OnDestroy {
         const { type } = event.data;
 
         if (type === 'heartbeat') {
-          this.send('', 'heartbeat');
+          this.send('', MESSAGE_TYPES.HEARTBEAT);
         }
       };
 
@@ -344,7 +350,7 @@ export class PokerWebSocketService implements OnDestroy {
         console.error('Heartbeat worker error:', error);
         // Fallback to setInterval
         this.stopHeartbeatWorker();
-        setInterval(() => this.send('', 'heartbeat'), this.HEARTBEAT_INTERVAL);
+        setInterval(() => this.send('', MESSAGE_TYPES.HEARTBEAT), this.HEARTBEAT_INTERVAL);
       };
 
       // Start the worker
@@ -355,7 +361,7 @@ export class PokerWebSocketService implements OnDestroy {
     } catch (error) {
       console.error('Failed to create heartbeat worker:', error);
       // Fallback to setInterval
-      setInterval(() => this.send('', 'heartbeat'), this.HEARTBEAT_INTERVAL);
+      setInterval(() => this.send('', MESSAGE_TYPES.HEARTBEAT), this.HEARTBEAT_INTERVAL);
     }
   }
 
@@ -398,9 +404,9 @@ export class PokerWebSocketService implements OnDestroy {
       this.currentStatus = userStatus;
 
       if (userStatus === 'afk') {
-        this.send('', 'status_afk');
+        this.send('', MESSAGE_TYPES.STATUS_AFK);
       } else {
-        this.send('', 'status_online');
+        this.send('', MESSAGE_TYPES.STATUS_ONLINE);
       }
     }
   }
@@ -460,16 +466,27 @@ export class PokerWebSocketService implements OnDestroy {
    */
   private handleBeforeUnload(): void {
     if (this._webSocket) {
-      this.send('', 'user_left');
+      this.send('', MESSAGE_TYPES.USER_LEFT);
     }
   }
 
   /**
-   * Clear all votes
+   * Clear all votes (broadcasts to all clients)
    */
   public clearVotes(): void {
+    // Send clear votes action to backend (will broadcast to all clients)
+    this.send('', MESSAGE_TYPES.CLEAR_VOTES);
+    // Also clear the description
+    this.send('', MESSAGE_TYPES.DESCRIPTION);
+    // Still send the old ClearVotes message for backwards compatibility
     this.send('ClearVotes');
-    this.send('', 'description');
+  }
+
+  /**
+   * Show all votes (broadcasts to all clients)
+   */
+  public showVotes(): void {
+    this.send('', MESSAGE_TYPES.SHOW_VOTES);
   }
 
   ngOnDestroy(): void {

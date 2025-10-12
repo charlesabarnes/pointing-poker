@@ -30,6 +30,7 @@
     "@angular/platform-server": "^20.3.4",
     "@angular/router": "^20.3.4",
     "@angular/ssr": "^20.3.5",
+    "@fingerprintjs/fingerprintjs": "^4.6.2",
     "@fortawesome/angular-fontawesome": "^3.0.0",
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
     "@fortawesome/pro-light-svg-icons": "^7.1.0",
