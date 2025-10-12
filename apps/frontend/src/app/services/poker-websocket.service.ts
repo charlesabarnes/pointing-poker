@@ -20,9 +20,11 @@ export class PokerWebSocketService implements OnDestroy {
   private userFingerprint: string;
 
   // Public signals for component state
+  // NOTE: All keyed by FINGERPRINT, not username
   public pointValues = signal<PointValues>({});
   public chatLog = signal<Message[]>([]);
   public userActivity = signal<Record<string, UserActivity>>({});
+  public userNames = signal<Record<string, string>>({}); // fingerprint -> display name mapping
   public lastDescription = signal<string>('');
   public newUserJoined = signal<boolean>(false);
   public recentJoinedUser = signal<string>('');
@@ -129,20 +131,34 @@ export class PokerWebSocketService implements OnDestroy {
       return;
     }
 
+    // If no fingerprint, log warning but continue processing
+    if (!res.fingerprint) {
+      console.warn('Received message without fingerprint:', res);
+      // For backwards compatibility and initial state sync, we'll still process it
+      // but we won't be able to track this user properly
+    }
+
+    // Use fingerprint as key, or fall back to sender name if no fingerprint
+    const userKey = res.fingerprint || res.sender;
+
+    // Update user name mapping (handles name changes automatically)
+    // Even without fingerprint, we map the key to the display name
+    this.updateUserName(userKey, res.sender);
+
     // Emit message to subscribers
     this._messageSubject.next(res);
 
     // Update user activity
-    this.updateUserActivity(res.sender, res.timestamp);
+    this.updateUserActivity(userKey, res.timestamp);
 
     // Handle different message types
     switch (res.type) {
       case 'disconnect':
       case 'user_left':
-        this.handleDisconnect(res.sender);
+        this.handleDisconnect(userKey);
         break;
       case 'points':
-        this.handlePoints(res.sender, res.content);
+        this.handlePoints(userKey, res.content);
         break;
       case 'chat':
         this.handleChat(res);
@@ -154,13 +170,18 @@ export class PokerWebSocketService implements OnDestroy {
         // Activity already updated above
         break;
       case 'status_afk':
-        this.updateUserStatus(res.sender, 'afk', res.timestamp);
+        this.updateUserStatus(userKey, 'afk', res.timestamp);
         break;
       case 'status_online':
-        this.updateUserStatus(res.sender, 'online', res.timestamp);
+        this.updateUserStatus(userKey, 'online', res.timestamp);
         break;
       case 'join':
         this.handleJoin(res);
+        break;
+      case 'name_changed':
+        if (res.fingerprint) {
+          this.handleNameChange(res.fingerprint, res.sender);
+        }
         break;
       default:
         break;
@@ -168,22 +189,35 @@ export class PokerWebSocketService implements OnDestroy {
   }
 
   /**
-   * Update user activity tracking
+   * Update user name mapping (fingerprint/username -> display name)
+   * @param key - Either fingerprint (preferred) or username (fallback)
+   * @param displayName - The display name for this user
    */
-  private updateUserActivity(sender: string, timestamp?: number): void {
+  private updateUserName(key: string, displayName: string): void {
+    const names = this.userNames();
+    if (names[key] !== displayName) {
+      names[key] = displayName;
+      this.userNames.set({ ...names });
+    }
+  }
+
+  /**
+   * Update user activity tracking (keyed by fingerprint)
+   */
+  private updateUserActivity(fingerprint: string, timestamp?: number): void {
     const activity = this.userActivity();
     const currentTime = timestamp || Date.now();
 
-    if (!activity[sender]) {
-      activity[sender] = {
+    if (!activity[fingerprint]) {
+      activity[fingerprint] = {
         lastActive: currentTime,
         status: 'online'
       };
     } else {
-      activity[sender].lastActive = currentTime;
+      activity[fingerprint].lastActive = currentTime;
       // Only update to online if not explicitly set to another status
-      if (activity[sender].status === 'offline') {
-        activity[sender].status = 'online';
+      if (activity[fingerprint].status === 'offline') {
+        activity[fingerprint].status = 'online';
       }
     }
 
@@ -191,47 +225,60 @@ export class PokerWebSocketService implements OnDestroy {
   }
 
   /**
-   * Update user status (for AFK/online state changes)
+   * Update user status (for AFK/online state changes, keyed by fingerprint)
    */
-  private updateUserStatus(sender: string, status: 'online' | 'afk', timestamp?: number): void {
+  private updateUserStatus(fingerprint: string, status: 'online' | 'afk', timestamp?: number): void {
     const activity = this.userActivity();
     const currentTime = timestamp || Date.now();
 
-    if (!activity[sender]) {
-      activity[sender] = {
+    if (!activity[fingerprint]) {
+      activity[fingerprint] = {
         lastActive: currentTime,
         status: status
       };
     } else {
-      activity[sender].lastActive = currentTime;
-      activity[sender].status = status;
+      activity[fingerprint].lastActive = currentTime;
+      activity[fingerprint].status = status;
     }
 
     this.userActivity.set({ ...activity });
   }
 
   /**
-   * Handle disconnect message
+   * Handle disconnect message (keyed by fingerprint)
    */
-  private handleDisconnect(sender: string): void {
+  private handleDisconnect(fingerprint: string): void {
     const points = this.pointValues();
-    delete points[sender];
+    delete points[fingerprint];
     this.pointValues.set({ ...points });
 
     const activity = this.userActivity();
-    if (activity[sender]) {
-      activity[sender].status = 'offline';
+    if (activity[fingerprint]) {
+      activity[fingerprint].status = 'offline';
       this.userActivity.set({ ...activity });
     }
+
+    // Also remove from userNames mapping
+    const names = this.userNames();
+    delete names[fingerprint];
+    this.userNames.set({ ...names });
   }
 
   /**
-   * Handle points message
+   * Handle points message (keyed by fingerprint)
    */
-  private handlePoints(sender: string, content: string | number | undefined): void {
+  private handlePoints(fingerprint: string, content: string | number | undefined): void {
     const points = this.pointValues();
-    points[sender] = content;
+    points[fingerprint] = content;
     this.pointValues.set({ ...points });
+  }
+
+  /**
+   * Handle name change event
+   */
+  private handleNameChange(fingerprint: string, newName: string): void {
+    console.log(`User ${this.userNames()[fingerprint]} changed name to ${newName}`);
+    this.updateUserName(fingerprint, newName);
   }
 
   /**
@@ -367,15 +414,15 @@ export class PokerWebSocketService implements OnDestroy {
       const activity = this.userActivity();
       let updated = false;
 
-      Object.keys(activity).forEach(user => {
-        if (user === this.userName) return; // Skip current user
+      Object.keys(activity).forEach(fingerprint => {
+        if (fingerprint === this.userFingerprint) return; // Skip current user
 
-        const lastActive = activity[user].lastActive;
+        const lastActive = activity[fingerprint].lastActive;
         const timeSinceActive = currentTime - lastActive;
 
         if (timeSinceActive > this.OFFLINE_THRESHOLD) {
-          if (activity[user].status !== 'offline') {
-            activity[user].status = 'offline';
+          if (activity[fingerprint].status !== 'offline') {
+            activity[fingerprint].status = 'offline';
             updated = true;
           }
         }
@@ -385,6 +432,27 @@ export class PokerWebSocketService implements OnDestroy {
         this.userActivity.set({ ...activity });
       }
     }, this.STATUS_CHECK_INTERVAL);
+  }
+
+  /**
+   * Check if a fingerprint belongs to the current user
+   */
+  public isCurrentUser(fingerprint: string): boolean {
+    return fingerprint === this.userFingerprint;
+  }
+
+  /**
+   * Get current user's fingerprint
+   */
+  public getCurrentUserFingerprint(): string {
+    return this.userFingerprint;
+  }
+
+  /**
+   * Get display name for a fingerprint
+   */
+  public getDisplayName(fingerprint: string): string {
+    return this.userNames()[fingerprint] || 'Unknown';
   }
 
   /**

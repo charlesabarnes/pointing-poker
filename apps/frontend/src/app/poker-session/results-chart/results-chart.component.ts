@@ -110,9 +110,10 @@ export class ResultsChartComponent {
     let pointValueCounts: Record<string, number> = {};
     let point: number;
     const values = this.wsService.pointValues();
-    for (const user in values) {
-      if (values.hasOwnProperty(user) && values[user] !== 'disconnect' && values[user]) {
-        point = values[user] as number;
+    // Note: fingerprint is the key, but we only care about the point value
+    for (const fingerprint in values) {
+      if (values.hasOwnProperty(fingerprint) && values[fingerprint] !== 'disconnect' && values[fingerprint]) {
+        point = values[fingerprint] as number;
         pointValueCounts[point] = pointValueCounts[point] ? pointValueCounts[point] + 1 : 1;
       }
     }

@@ -32,49 +32,49 @@
       </div>
 
       <!-- Table rows -->
-      <ng-container *ngFor="let userName of stateService.userNames()">
+      <ng-container *ngFor="let user of stateService.users()">
         <div class="user-info"
-             *ngIf="wsService.pointValues()[userName] !== 'disconnect'"
+             *ngIf="wsService.pointValues()[user.fingerprint] !== 'disconnect'"
              role="row"
-             [attr.aria-current]="userName == currentUserName ? 'true' : null"
-             [ngClass]="{'current-user': userName == currentUserName}">
+             [attr.aria-current]="wsService.isCurrentUser(user.fingerprint) ? 'true' : null"
+             [ngClass]="{'current-user': wsService.isCurrentUser(user.fingerprint)}">
           <div class="player-name" role="cell">
-            <span>{{userName}}</span>
-            <fa-icon *ngIf="userName == currentUserName"
+            <span>{{user.displayName}}</span>
+            <fa-icon *ngIf="wsService.isCurrentUser(user.fingerprint)"
                      [icon]="faUserCircle"
                      aria-label="Current user"
                      title="You">
             </fa-icon>
-            <span *ngIf="userName == currentUserName" class="sr-only">(You)</span>
+            <span *ngIf="wsService.isCurrentUser(user.fingerprint)" class="sr-only">(You)</span>
           </div>
           <div class="status-indicator" role="cell">
             <span class="status-dot"
               [ngClass]="{
-                'status-online': wsService.userActivity()[userName]?.status === 'online',
-                'status-away': wsService.userActivity()[userName]?.status === 'away',
-                'status-offline': wsService.userActivity()[userName]?.status === 'offline' || !wsService.userActivity()[userName]
+                'status-online': wsService.userActivity()[user.fingerprint]?.status === 'online',
+                'status-afk': wsService.userActivity()[user.fingerprint]?.status === 'afk',
+                'status-offline': wsService.userActivity()[user.fingerprint]?.status === 'offline' || !wsService.userActivity()[user.fingerprint]
               }"
               role="img"
-              [attr.aria-label]="(wsService.userActivity()[userName]?.status || 'offline') + ' status indicator'">
+              [attr.aria-label]="(wsService.userActivity()[user.fingerprint]?.status || 'offline') + ' status indicator'">
             </span>
-            <span class="status-text">{{ wsService.userActivity()[userName]?.status || 'offline' }}</span>
+            <span class="status-text">{{ wsService.userActivity()[user.fingerprint]?.status || 'offline' }}</span>
           </div>
           <div class="point-value" role="cell">
             <span *ngIf="stateService.showValues()"
                   class="vote-value"
-                  [attr.aria-label]="'Vote: ' + wsService.pointValues()[userName]">
-              {{wsService.pointValues()[userName]}}
+                  [attr.aria-label]="'Vote: ' + wsService.pointValues()[user.fingerprint]">
+              {{wsService.pointValues()[user.fingerprint]}}
             </span>
             <div *ngIf="!stateService.showValues()" class="vote-status">
               <fa-icon
-                [icon]="wsService.pointValues()[userName] ? faCheckCircle : faCircle"
+                [icon]="wsService.pointValues()[user.fingerprint] ? faCheckCircle : faCircle"
                 [ngClass]="{
-                  'has-voted': wsService.pointValues()[userName],
-                  'no-vote': !wsService.pointValues()[userName]
+                  'has-voted': wsService.pointValues()[user.fingerprint],
+                  'no-vote': !wsService.pointValues()[user.fingerprint]
                 }"
                 aria-hidden="true">
               </fa-icon>
-              <span>{{ wsService.pointValues()[userName] ? 'Voted' : 'Not voted' }}</span>
+              <span>{{ wsService.pointValues()[user.fingerprint] ? 'Voted' : 'Not voted' }}</span>
             </div>
           </div>
         </div>

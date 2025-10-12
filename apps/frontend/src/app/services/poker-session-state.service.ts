@@ -23,25 +23,39 @@ export class PokerSessionStateService {
    */
   public showValues = computed(() => {
     const pointValues = this.wsService.pointValues();
-    const userNames = Object.keys(pointValues);
+    const fingerprints = Object.keys(pointValues);
 
-    const allVoted = userNames.filter((name: string) => {
-      return !pointValues[name];
+    const allVoted = fingerprints.filter((fingerprint: string) => {
+      return !pointValues[fingerprint];
     }).length === 0;
 
     return allVoted || this.showValuesForced();
   });
 
   /**
-   * Computed signal for user names
+   * Computed signal for user fingerprints (participants)
+   * NOTE: Returns fingerprints, not usernames. Use wsService.getDisplayName(fingerprint) to get the name.
    */
-  public userNames = computed(() => Object.keys(this.wsService.pointValues()));
+  public userFingerprints = computed(() => Object.keys(this.wsService.pointValues()));
+
+  /**
+   * Computed signal for users with name and fingerprint
+   * Returns array of { fingerprint, displayName }
+   */
+  public users = computed(() => {
+    const fingerprints = this.userFingerprints();
+    const userNames = this.wsService.userNames();
+    return fingerprints.map(fingerprint => ({
+      fingerprint,
+      displayName: userNames[fingerprint] || 'Unknown'
+    }));
+  });
 
   /**
    * Computed signal to determine if chart should be shown
    */
   public showChart = computed(() => {
-    return this.showValues() && this.userNames().length > 0;
+    return this.showValues() && this.userFingerprints().length > 0;
   });
 
   /**

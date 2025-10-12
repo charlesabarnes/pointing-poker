@@ -8,7 +8,8 @@ export type MessageType =
   | 'join'
   | 'status_afk'
   | 'status_online'
-  | 'user_left';
+  | 'user_left'
+  | 'name_changed';
 
 export class Message {
   public content: string | number | undefined;

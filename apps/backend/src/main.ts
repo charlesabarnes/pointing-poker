@@ -72,6 +72,33 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   // Handle messages
   ws.on('message', (msg: string) => {
     const message = JSON.parse(msg) as Message;
+
+    // Detect name change (same fingerprint, different name)
+    if (extWs.fingerprint === message.fingerprint &&
+        extWs.name &&
+        extWs.name !== message.sender) {
+      console.log(`Name changed: ${extWs.name} -> ${message.sender} (fingerprint: ${message.fingerprint})`);
+
+      // Broadcast name change to all clients in session
+      setTimeout(() => {
+        wss.clients.forEach((client: WebSocket) => {
+          const extClient = client as unknown as WebSocket & ExtWebSocket;
+          if (extClient.session === extWs.session) {
+            client.send(
+              createMessage(
+                message.sender,
+                message.sender, // new name in content
+                'name_changed',
+                undefined,
+                Date.now(),
+                message.fingerprint
+              )
+            );
+          }
+        });
+      }, 100);
+    }
+
     extWs.name = message.sender;
     extWs.fingerprint = message.fingerprint;
     extWs.lastActivity = Date.now();
@@ -88,7 +115,8 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                   message.content,
                   'chat',
                   undefined,
-                  message.timestamp
+                  message.timestamp,
+                  message.fingerprint
                 )
               );
             }
@@ -107,7 +135,8 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                   message.content,
                   'description',
                   undefined,
-                  message.timestamp
+                  message.timestamp,
+                  message.fingerprint
                 )
               );
             }
@@ -198,7 +227,8 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                   message.content,
                   'join',
                   undefined,
-                  message.timestamp
+                  message.timestamp,
+                  message.fingerprint
                 )
               );
             }
@@ -220,7 +250,14 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                 ) {
                   extConnectedClient.content = undefined;
                   client.send(
-                    createMessage(extConnectedClient.name, undefined, 'points')
+                    createMessage(
+                      extConnectedClient.name,
+                      undefined,
+                      'points',
+                      undefined,
+                      undefined,
+                      extConnectedClient.fingerprint
+                    )
                   );
                 }
               });
@@ -230,7 +267,16 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
           wss.clients.forEach((client: WebSocket) => {
             const extClient = client as unknown as WebSocket & ExtWebSocket;
             if (extClient.session === extWs.session) {
-              client.send(createMessage(extWs.name, 'disconnect', 'disconnect'));
+              client.send(
+                createMessage(
+                  extWs.name,
+                  'disconnect',
+                  'disconnect',
+                  undefined,
+                  undefined,
+                  extWs.fingerprint
+                )
+              );
               extWs.content = 'disconnect';
             }
           });
@@ -246,7 +292,8 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
                     message.content,
                     'points',
                     undefined,
-                    message.timestamp
+                    message.timestamp,
+                    message.fingerprint
                   )
                 );
               }

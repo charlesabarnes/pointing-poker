@@ -38,7 +38,8 @@ export class PokerSessionComponent implements OnInit, OnDestroy {
     // Effect to reset selected value when current user's points are cleared
     effect(() => {
       const points = this.wsService.pointValues();
-      if (this.name && points[this.name] === undefined) {
+      const currentUserFingerprint = this.wsService.getCurrentUserFingerprint();
+      if (currentUserFingerprint && points[currentUserFingerprint] === undefined) {
         this.stateService.resetSelectedValue();
         if (!this.stateService.showChart()) {
           this.stateService.resetConfetti();
