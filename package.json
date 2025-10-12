@@ -2,7 +2,8 @@
   "name": "pointing-poker",
   "version": "0.0.0",
   "scripts": {
-    "start": "nx run backend:serve",
+    "start": "node dist/apps/backend/main.js",
+    "heroku-postbuild": "npm run build",
     "start:dev": "nx run-many --target=serve --projects=backend,frontend --parallel",
     "build": "nx run-many --target=build --projects=backend,frontend --parallel",
     "build:frontend": "nx build frontend",
