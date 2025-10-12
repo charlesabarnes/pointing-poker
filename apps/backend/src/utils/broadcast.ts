@@ -72,3 +72,27 @@ export function getSessionClients(
   });
   return clients;
 }
+
+/**
+ * Broadcast a complete message object to all clients in a session
+ * This is simpler than broadcastToSession as it doesn't reconstruct the message
+ * @param wss - WebSocket server instance
+ * @param sessionId - The session ID to broadcast to
+ * @param message - The complete message to broadcast
+ * @param excludeSender - Optional WebSocket to exclude from broadcast (usually the sender)
+ */
+export function broadcastMessage(
+  wss: WebSocket.Server,
+  sessionId: string,
+  message: Message,
+  excludeSender?: WebSocket
+): void {
+  const messageStr = JSON.stringify(message);
+
+  wss.clients.forEach((client: WebSocket) => {
+    const extClient = client as unknown as WebSocket & ExtWebSocket;
+    if (extClient.session === sessionId && client !== excludeSender) {
+      client.send(messageStr);
+    }
+  });
+}
