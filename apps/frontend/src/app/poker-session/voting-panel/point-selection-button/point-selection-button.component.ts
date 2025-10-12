@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PointOption } from 'shared';
 
@@ -12,7 +12,7 @@ import { PointOption } from 'shared';
 export class PointSelectionButtonComponent {
   @Input() option!: PointOption;
   @Input() isSelected: boolean = false;
-  @Output() selected = new EventEmitter<number>();
+  selected = output<number>();
 
   onSelect(): void {
     if (!this.option.disabled) {
