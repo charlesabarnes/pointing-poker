@@ -1,11 +1,11 @@
-@import 'variables';
-@import 'mixins';
+@use 'variables' as *;
+@use 'mixins' as *;
 
 :host {
   .poker-session-container {
     padding: $spacing-2xl;
     min-height: 100vh;
-    background: $gradient-reverse;
+    background: $color-bg-darker;
   }
 
   .top-card {

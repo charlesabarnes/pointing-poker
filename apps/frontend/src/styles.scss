@@ -2,8 +2,8 @@
 @use '@angular/material' as mat;
 
 // Import design system
-@import 'variables';
-@import 'mixins';
+@use 'variables' as *;
+@use 'mixins' as *;
 
 // Include the common styles for Angular Material
 @include mat.core();
@@ -26,7 +26,7 @@ $custom-theme: mat.define-theme((
 body {
   margin: 0;
   font-family: $font-family-base;
-  background: $gradient-primary;
+  background: $color-bg-dark;
   color: $color-text-primary;
   min-height: 100vh;
 }

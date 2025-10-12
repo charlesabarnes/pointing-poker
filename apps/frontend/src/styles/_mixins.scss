@@ -1,15 +1,15 @@
 // Design System Mixins
 // Reusable style patterns to reduce duplication and ensure consistency
 
-@import 'variables';
+@use 'variables' as *;
 
 // ============================================================================
 // CARD STYLES
 // ============================================================================
 
-// Base card with gradient background
+// Base card with solid background
 @mixin card-base {
-  background: $gradient-primary;
+  background: $color-bg-card;
   border-radius: $border-radius-xl;
   box-shadow: $shadow-lg;
   overflow: hidden;
