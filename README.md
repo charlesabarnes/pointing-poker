@@ -95,6 +95,36 @@ Key configuration options:
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/charlesabarnes/pointing-poker)
 
+## Testing
+
+### E2E Tests
+
+This project uses Playwright for end-to-end testing. E2E tests ensure critical user flows work correctly.
+
+**Running E2E Tests:**
+
+```bash
+# Run all e2e tests (headless)
+npm run e2e
+
+# Run e2e tests with UI mode (interactive)
+npm run e2e:ui
+
+# Run e2e tests in headed mode (see browser)
+npm run e2e:headed
+```
+
+**E2E Tests Coverage:**
+- Session creation and joining
+- User voting and point selection
+- Results display and chart rendering
+- Multi-user real-time synchronization
+- WebSocket connection handling
+
+**CI/CD Integration:**
+
+E2E tests run automatically on every pull request to `master` via GitHub Actions. Tests must pass before PRs can be merged.
+
 ## Nx Commands
 
 This project uses Nx for monorepo management. Useful commands:

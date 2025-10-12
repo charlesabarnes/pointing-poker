@@ -77,8 +77,8 @@ export class PokerSessionComponent implements OnInit, OnDestroy {
       }
 
       if (!this.name) {
-        this.toastService.warning('Please set your name to join the session');
-        this.router.navigate(['/']);
+        // Name not set yet - user is being prompted by app component
+        // Don't connect to WebSocket until name is provided
         return;
       }
 

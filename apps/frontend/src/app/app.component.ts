@@ -58,9 +58,8 @@ export class AppComponent implements OnInit {
       const sessionMatch = currentUrl.match(/\/session\/([^\/\?]+)/);
 
       if (sessionMatch) {
-        // Store the intended session ID and navigate to home
+        // Store the intended session ID but stay on the session page
         this.pendingSessionId = sessionMatch[1];
-        this.router.navigate(['/']);
       }
 
       // Prompt for name
