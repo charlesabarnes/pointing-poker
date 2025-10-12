@@ -5,7 +5,10 @@ export type MessageType =
   | 'disconnect'
   | 'description'
   | 'heartbeat'
-  | 'join';
+  | 'join'
+  | 'status_afk'
+  | 'status_online'
+  | 'user_left';
 
 export class Message {
   public content: string | number | undefined;
@@ -13,18 +16,21 @@ export class Message {
   public type: MessageType;
   public timestamp: number;
   public session?: string;
+  public fingerprint?: string;
 
   constructor(
     sender: string,
     content: string | number | undefined,
     type: MessageType,
     session?: string,
-    timestamp?: number
+    timestamp?: number,
+    fingerprint?: string
   ) {
     this.sender = sender;
     this.content = content;
     this.type = type;
     this.session = session;
     this.timestamp = timestamp || Date.now();
+    this.fingerprint = fingerprint;
   }
 }

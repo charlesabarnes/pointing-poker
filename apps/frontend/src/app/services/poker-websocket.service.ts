@@ -2,6 +2,8 @@ import { Injectable, signal, computed, OnDestroy } from '@angular/core';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { Subject, Observable } from 'rxjs';
 import { Message, MessageType, UserActivity, PointValues } from 'shared';
+import { UserFingerprintService } from './user-fingerprint.service';
+import { UserActivityService } from './user-activity.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,11 +11,13 @@ import { Message, MessageType, UserActivity, PointValues } from 'shared';
 export class PokerWebSocketService implements OnDestroy {
   private _webSocket: WebSocketSubject<any>;
   private _messageSubject = new Subject<Message>();
-  private heartbeatInterval: any;
+  private heartbeatWorker: Worker | null = null;
   private activityInterval: any;
+  private statusCheckInterval: any;
 
   private sessionId: string;
   private userName: string;
+  private userFingerprint: string;
 
   // Public signals for component state
   public pointValues = signal<PointValues>({});
@@ -24,15 +28,28 @@ export class PokerWebSocketService implements OnDestroy {
   public recentJoinedUser = signal<string>('');
 
   // Constants
-  private readonly OFFLINE_THRESHOLD = 60000; // 1 minute
-  private readonly AWAY_THRESHOLD = 30000; // 30 seconds
+  private readonly OFFLINE_THRESHOLD = 3600000; // 1 hour for true disconnect
+  private readonly AFK_THRESHOLD = 120000; // 2 minutes for AFK
   private readonly HEARTBEAT_INTERVAL = 15000; // 15 seconds
-  private readonly ACTIVITY_CHECK_INTERVAL = 10000; // 10 seconds
+  private readonly STATUS_CHECK_INTERVAL = 10000; // 10 seconds
+
+  // Track current status to avoid redundant sends
+  private currentStatus: 'online' | 'afk' | 'offline' = 'online';
 
   // Observable stream of all messages
   public messages$: Observable<Message> = this._messageSubject.asObservable();
 
-  constructor() {}
+  constructor(
+    private fingerprintService: UserFingerprintService,
+    private activityService: UserActivityService
+  ) {
+    this.userFingerprint = this.fingerprintService.getFingerprint();
+
+    // Listen for beforeunload to send graceful disconnect
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => this.handleBeforeUnload());
+    }
+  }
 
   /**
    * Initialize WebSocket connection
@@ -55,12 +72,14 @@ export class PokerWebSocketService implements OnDestroy {
       complete: () => console.log('WebSocket connection closed')
     });
 
-    // Send initial message
-    this._webSocket.next(new Message(userName, undefined, 'points', sessionId));
+    // Send initial message with fingerprint
+    this._webSocket.next(
+      new Message(userName, undefined, 'points', sessionId, Date.now(), this.userFingerprint)
+    );
 
     // Setup intervals
     this.setupHeartbeat();
-    this.setupActivityMonitor();
+    this.setupStatusMonitor();
 
     // Announce user has joined
     setTimeout(() => {
@@ -77,7 +96,14 @@ export class PokerWebSocketService implements OnDestroy {
       return;
     }
 
-    const message = new Message(this.userName, content, type, this.sessionId);
+    const message = new Message(
+      this.userName,
+      content,
+      type,
+      this.sessionId,
+      Date.now(),
+      this.userFingerprint
+    );
     this._webSocket.next(message);
   }
 
@@ -85,11 +111,10 @@ export class PokerWebSocketService implements OnDestroy {
    * Disconnect and cleanup
    */
   public disconnect(): void {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-    }
-    if (this.activityInterval) {
-      clearInterval(this.activityInterval);
+    this.stopHeartbeatWorker();
+
+    if (this.statusCheckInterval) {
+      clearInterval(this.statusCheckInterval);
     }
     if (this._webSocket) {
       this._webSocket.complete();
@@ -113,6 +138,7 @@ export class PokerWebSocketService implements OnDestroy {
     // Handle different message types
     switch (res.type) {
       case 'disconnect':
+      case 'user_left':
         this.handleDisconnect(res.sender);
         break;
       case 'points':
@@ -126,6 +152,12 @@ export class PokerWebSocketService implements OnDestroy {
         break;
       case 'heartbeat':
         // Activity already updated above
+        break;
+      case 'status_afk':
+        this.updateUserStatus(res.sender, 'afk', res.timestamp);
+        break;
+      case 'status_online':
+        this.updateUserStatus(res.sender, 'online', res.timestamp);
         break;
       case 'join':
         this.handleJoin(res);
@@ -149,7 +181,30 @@ export class PokerWebSocketService implements OnDestroy {
       };
     } else {
       activity[sender].lastActive = currentTime;
-      activity[sender].status = 'online';
+      // Only update to online if not explicitly set to another status
+      if (activity[sender].status === 'offline') {
+        activity[sender].status = 'online';
+      }
+    }
+
+    this.userActivity.set({ ...activity });
+  }
+
+  /**
+   * Update user status (for AFK/online state changes)
+   */
+  private updateUserStatus(sender: string, status: 'online' | 'afk', timestamp?: number): void {
+    const activity = this.userActivity();
+    const currentTime = timestamp || Date.now();
+
+    if (!activity[sender]) {
+      activity[sender] = {
+        lastActive: currentTime,
+        status: status
+      };
+    } else {
+      activity[sender].lastActive = currentTime;
+      activity[sender].status = status;
     }
 
     this.userActivity.set({ ...activity });
@@ -214,24 +269,107 @@ export class PokerWebSocketService implements OnDestroy {
   }
 
   /**
-   * Setup heartbeat mechanism
+   * Setup heartbeat mechanism using Web Worker
    */
   private setupHeartbeat(): void {
-    this.heartbeatInterval = setInterval(() => {
-      this.send('', 'heartbeat');
-    }, this.HEARTBEAT_INTERVAL);
+    if (typeof Worker === 'undefined') {
+      console.warn('Web Workers not supported, using fallback setInterval');
+      // Fallback to setInterval if workers not supported
+      setInterval(() => this.send('', 'heartbeat'), this.HEARTBEAT_INTERVAL);
+      return;
+    }
+
+    try {
+      this.heartbeatWorker = new Worker(
+        new URL('../workers/heartbeat.worker', import.meta.url),
+        { type: 'module' }
+      );
+
+      this.heartbeatWorker.onmessage = (event: MessageEvent) => {
+        const { type } = event.data;
+
+        if (type === 'heartbeat') {
+          this.send('', 'heartbeat');
+        }
+      };
+
+      this.heartbeatWorker.onerror = (error) => {
+        console.error('Heartbeat worker error:', error);
+        // Fallback to setInterval
+        this.stopHeartbeatWorker();
+        setInterval(() => this.send('', 'heartbeat'), this.HEARTBEAT_INTERVAL);
+      };
+
+      // Start the worker
+      this.heartbeatWorker.postMessage({
+        type: 'start',
+        data: { interval: this.HEARTBEAT_INTERVAL }
+      });
+    } catch (error) {
+      console.error('Failed to create heartbeat worker:', error);
+      // Fallback to setInterval
+      setInterval(() => this.send('', 'heartbeat'), this.HEARTBEAT_INTERVAL);
+    }
   }
 
   /**
-   * Setup activity monitoring
+   * Stop heartbeat worker
    */
-  private setupActivityMonitor(): void {
-    this.activityInterval = setInterval(() => {
+  private stopHeartbeatWorker(): void {
+    if (this.heartbeatWorker) {
+      this.heartbeatWorker.postMessage({ type: 'stop' });
+      this.heartbeatWorker.terminate();
+      this.heartbeatWorker = null;
+    }
+  }
+
+  /**
+   * Setup status monitoring based on user activity
+   */
+  private setupStatusMonitor(): void {
+    // Check status periodically
+    this.statusCheckInterval = setInterval(() => {
+      this.checkAndUpdateStatus();
+    }, this.STATUS_CHECK_INTERVAL);
+
+    // Also listen to activity events to update status immediately
+    this.activityService.activity$.subscribe(() => {
+      this.checkAndUpdateStatus();
+    });
+
+    // Check for other users' timeout
+    this.checkOtherUsersActivity();
+  }
+
+  /**
+   * Check and update current user's status
+   */
+  private checkAndUpdateStatus(): void {
+    const userStatus = this.activityService.getUserStatus();
+
+    if (userStatus !== this.currentStatus) {
+      this.currentStatus = userStatus;
+
+      if (userStatus === 'afk') {
+        this.send('', 'status_afk');
+      } else {
+        this.send('', 'status_online');
+      }
+    }
+  }
+
+  /**
+   * Check other users' activity and mark as offline if needed
+   */
+  private checkOtherUsersActivity(): void {
+    setInterval(() => {
       const currentTime = Date.now();
       const activity = this.userActivity();
       let updated = false;
 
       Object.keys(activity).forEach(user => {
+        if (user === this.userName) return; // Skip current user
+
         const lastActive = activity[user].lastActive;
         const timeSinceActive = currentTime - lastActive;
 
@@ -240,18 +378,22 @@ export class PokerWebSocketService implements OnDestroy {
             activity[user].status = 'offline';
             updated = true;
           }
-        } else if (timeSinceActive > this.AWAY_THRESHOLD) {
-          if (activity[user].status !== 'away') {
-            activity[user].status = 'away';
-            updated = true;
-          }
         }
       });
 
       if (updated) {
         this.userActivity.set({ ...activity });
       }
-    }, this.ACTIVITY_CHECK_INTERVAL);
+    }, this.STATUS_CHECK_INTERVAL);
+  }
+
+  /**
+   * Handle beforeunload event (tab closing)
+   */
+  private handleBeforeUnload(): void {
+    if (this._webSocket) {
+      this.send('', 'user_left');
+    }
   }
 
   /**

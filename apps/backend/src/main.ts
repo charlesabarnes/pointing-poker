@@ -27,9 +27,10 @@ function createMessage(
   content: string | number | undefined,
   type: MessageType,
   session?: string,
-  timestamp?: number
+  timestamp?: number,
+  fingerprint?: string
 ): string {
-  return JSON.stringify(new Message(sender, content, type, session, timestamp));
+  return JSON.stringify(new Message(sender, content, type, session, timestamp, fingerprint));
 }
 
 // Initialize WebSocket server
@@ -50,7 +51,16 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   wss.clients.forEach((client: WebSocket) => {
     const extClient = client as unknown as WebSocket & ExtWebSocket;
     if (extClient.session === extWs.session) {
-      ws.send(createMessage(extClient.name, extClient.content, 'points'));
+      ws.send(
+        createMessage(
+          extClient.name,
+          extClient.content,
+          'points',
+          undefined,
+          undefined,
+          extClient.fingerprint
+        )
+      );
     }
   });
 
@@ -63,6 +73,8 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   ws.on('message', (msg: string) => {
     const message = JSON.parse(msg) as Message;
     extWs.name = message.sender;
+    extWs.fingerprint = message.fingerprint;
+    extWs.lastActivity = Date.now();
 
     switch (message.type) {
       case 'chat':
@@ -106,6 +118,72 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       case 'heartbeat':
         // Just mark client as active, no need to broadcast
         extWs.isAlive = true;
+        extWs.lastActivity = Date.now();
+        break;
+
+      case 'status_afk':
+        // Broadcast AFK status to all clients in session
+        setTimeout(() => {
+          wss.clients.forEach((client: WebSocket) => {
+            const extClient = client as unknown as WebSocket & ExtWebSocket;
+            if (extClient.session === extWs.session) {
+              client.send(
+                createMessage(
+                  message.sender,
+                  message.content,
+                  'status_afk',
+                  undefined,
+                  message.timestamp,
+                  message.fingerprint
+                )
+              );
+            }
+          });
+        }, 100);
+        break;
+
+      case 'status_online':
+        // Broadcast online status to all clients in session
+        setTimeout(() => {
+          wss.clients.forEach((client: WebSocket) => {
+            const extClient = client as unknown as WebSocket & ExtWebSocket;
+            if (extClient.session === extWs.session) {
+              client.send(
+                createMessage(
+                  message.sender,
+                  message.content,
+                  'status_online',
+                  undefined,
+                  message.timestamp,
+                  message.fingerprint
+                )
+              );
+            }
+          });
+        }, 100);
+        break;
+
+      case 'user_left':
+        // Broadcast user left to all clients in session
+        setTimeout(() => {
+          wss.clients.forEach((client: WebSocket) => {
+            const extClient = client as unknown as WebSocket & ExtWebSocket;
+            if (extClient.session === extWs.session && ws !== client) {
+              client.send(
+                createMessage(
+                  message.sender,
+                  message.content,
+                  'user_left',
+                  undefined,
+                  message.timestamp,
+                  message.fingerprint
+                )
+              );
+            }
+          });
+        }, 100);
+        // Close the connection
+        ws.close();
         break;
 
       case 'join':
@@ -187,33 +265,79 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
     wss.clients.forEach((client: WebSocket) => {
       const extClient = client as unknown as WebSocket & ExtWebSocket;
       if (extClient.session === extWs.session && ws !== client) {
-        client.send(createMessage(extWs.name, 'disconnect', 'disconnect'));
+        client.send(
+          createMessage(
+            extWs.name,
+            'disconnect',
+            'disconnect',
+            undefined,
+            undefined,
+            extWs.fingerprint
+          )
+        );
       }
     });
   });
 });
 
-// Check connections every 10 seconds
+// Check connections every 30 seconds for better performance
+const CONNECTION_CHECK_INTERVAL = 30000; // 30 seconds
+const INACTIVITY_TIMEOUT = 3600000; // 1 hour
+
 setInterval(() => {
+  const now = Date.now();
+
   wss.clients.forEach((ws: WebSocket) => {
     const extWs = ws as unknown as WebSocket & ExtWebSocket;
 
+    // Check for ping/pong timeout (connection alive check)
     if (!extWs.isAlive) {
       wss.clients.forEach((client: WebSocket) => {
         const extClient = client as unknown as WebSocket & ExtWebSocket;
         if (extClient.session === extWs.session && ws !== client) {
-          client.send(createMessage(extWs.name, 'disconnect', 'disconnect'));
+          client.send(
+            createMessage(
+              extWs.name,
+              'disconnect',
+              'disconnect',
+              undefined,
+              undefined,
+              extWs.fingerprint
+            )
+          );
         }
       });
 
-      console.log('client Disconnected');
+      console.log(`Client disconnected (no pong): ${extWs.name}`);
+      return ws.terminate();
+    }
+
+    // Check for inactivity timeout (1 hour)
+    if (extWs.lastActivity && now - extWs.lastActivity > INACTIVITY_TIMEOUT) {
+      wss.clients.forEach((client: WebSocket) => {
+        const extClient = client as unknown as WebSocket & ExtWebSocket;
+        if (extClient.session === extWs.session && ws !== client) {
+          client.send(
+            createMessage(
+              extWs.name,
+              'timeout',
+              'disconnect',
+              undefined,
+              undefined,
+              extWs.fingerprint
+            )
+          );
+        }
+      });
+
+      console.log(`Client disconnected (timeout): ${extWs.name}`);
       return ws.terminate();
     }
 
     extWs.isAlive = false;
     ws.ping();
   });
-}, 10000);
+}, CONNECTION_CHECK_INTERVAL);
 
 // Start the server
 server.listen(PORT, () => {

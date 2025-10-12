@@ -6,12 +6,14 @@ export interface ExtWebSocket {
   session?: string;
   name?: string;
   content?: string | number;
+  fingerprint?: string;
+  lastActivity?: number;
 }
 
 /**
  * User activity status
  */
-export type UserStatus = 'online' | 'away' | 'offline';
+export type UserStatus = 'online' | 'afk' | 'offline';
 
 /**
  * User activity tracking
