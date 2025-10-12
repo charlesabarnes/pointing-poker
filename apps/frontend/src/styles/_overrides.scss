@@ -82,3 +82,23 @@
     }
   }
 }
+
+
+
+// ============================================================================
+// MATERIAL 3 CSS CUSTOM PROPERTIES
+// ============================================================================
+
+// Apply Material 3 component shape tokens globally
+// These override the default Material 3 values to match our design system
+:root {
+  // Button shapes - use consistent border-radius across all button types
+  --mdc-text-button-container-shape: #{$border-radius-md};
+  --mdc-protected-button-container-shape: #{$border-radius-md};
+  --mdc-filled-button-container-shape: #{$border-radius-md};
+  --mdc-outlined-button-container-shape: #{$border-radius-md};
+  --mdc-icon-button-state-layer-shape: #{$border-radius-md};
+
+  // Form field shapes
+  --mdc-outlined-text-field-container-shape: #{$border-radius-md};
+}
