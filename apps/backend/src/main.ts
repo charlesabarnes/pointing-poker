@@ -37,6 +37,11 @@ function createMessage(
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+// Persistent vote storage (per session, per fingerprint)
+const sessionVotes: Record<string, Record<string, string | number | undefined>> = {};
+// Track if votes have been revealed (shown) per session
+const sessionVotesRevealed: Record<string, boolean> = {};
+
 // Handle WebSocket connections
 wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   // TypeScript fix for req.url
@@ -63,6 +68,20 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       );
     }
   });
+
+  // Send revealed state to new connection if votes are already shown
+  if (sessionVotesRevealed[extWs.session]) {
+    ws.send(
+      createMessage(
+        'server',
+        'votes_revealed',
+        MESSAGE_TYPES.SHOW_VOTES,
+        undefined,
+        Date.now(),
+        undefined
+      )
+    );
+  }
 
   // Handle pong response
   ws.on('pong', () => {
@@ -238,6 +257,12 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
 
       case MESSAGE_TYPES.POINTS:
         if (message.content === 'ClearVotes') {
+          // Clear persistent vote storage for this session
+          if (sessionVotes[extWs.session]) {
+            delete sessionVotes[extWs.session];
+          }
+          sessionVotesRevealed[extWs.session] = false;
+
           wss.clients.forEach((client: WebSocket) => {
             const extClient = client as unknown as WebSocket & ExtWebSocket;
             if (extClient.session === extWs.session) {
@@ -280,8 +305,47 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
               extWs.content = 'disconnect';
             }
           });
+        } else if (message.content === undefined) {
+          // Check if this is a reconnection with a stored vote
+          if (message.fingerprint &&
+              sessionVotes[extWs.session] &&
+              sessionVotes[extWs.session][message.fingerprint] !== undefined &&
+              !sessionVotesRevealed[extWs.session]) {
+            // Restore their previous vote
+            const restoredVote = sessionVotes[extWs.session][message.fingerprint];
+            extWs.content = restoredVote;
+
+            // Broadcast the restored vote to all clients in session
+            setTimeout(() => {
+              wss.clients.forEach((client: WebSocket) => {
+                const extClient = client as unknown as WebSocket & ExtWebSocket;
+                if (extClient.session === extWs.session) {
+                  client.send(
+                    createMessage(
+                      message.sender,
+                      restoredVote,
+                      MESSAGE_TYPES.POINTS,
+                      undefined,
+                      message.timestamp,
+                      message.fingerprint
+                    )
+                  );
+                }
+              });
+            }, 100);
+          }
         } else {
+          // Regular vote - store and broadcast
           extWs.content = message.content;
+
+          // Store in persistent session votes
+          if (!sessionVotes[extWs.session]) {
+            sessionVotes[extWs.session] = {};
+          }
+          if (message.fingerprint) {
+            sessionVotes[extWs.session][message.fingerprint] = message.content;
+          }
+
           setTimeout(() => {
             wss.clients.forEach((client: WebSocket) => {
               const extClient = client as unknown as WebSocket & ExtWebSocket;
@@ -303,6 +367,9 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         break;
 
       case MESSAGE_TYPES.SHOW_VOTES:
+        // Mark session as revealed (votes shown)
+        sessionVotesRevealed[extWs.session] = true;
+
         // Broadcast show votes action to all clients in session
         setTimeout(() => {
           wss.clients.forEach((client: WebSocket) => {
@@ -324,6 +391,12 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         break;
 
       case MESSAGE_TYPES.CLEAR_VOTES:
+        // Clear persistent vote storage for this session
+        if (sessionVotes[extWs.session]) {
+          delete sessionVotes[extWs.session];
+        }
+        sessionVotesRevealed[extWs.session] = false;
+
         // Broadcast clear votes action to all clients in session
         setTimeout(() => {
           wss.clients.forEach((client: WebSocket) => {

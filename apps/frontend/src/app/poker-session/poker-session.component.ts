@@ -35,14 +35,26 @@ export class PokerSessionComponent implements OnInit, OnDestroy {
     private wsService: PokerWebSocketService,
     public stateService: PokerSessionStateService
   ) {
-    // Effect to reset selected value when current user's points are cleared
+    // Effect to sync selected value when current user's points change
     effect(() => {
       const points = this.wsService.pointValues();
       const currentUserFingerprint = this.wsService.getCurrentUserFingerprint();
-      if (currentUserFingerprint && points[currentUserFingerprint] === undefined) {
-        this.stateService.resetSelectedValue();
-        if (!this.stateService.showChart()) {
-          this.stateService.resetConfetti();
+
+      if (currentUserFingerprint) {
+        const currentUserPoints = points[currentUserFingerprint];
+
+        if (currentUserPoints === undefined) {
+          // Vote was cleared, reset selection
+          this.stateService.resetSelectedValue();
+          if (!this.stateService.showChart()) {
+            this.stateService.resetConfetti();
+          }
+        } else if (
+          typeof currentUserPoints === 'number' &&
+          this.stateService.selectedPointValue() !== currentUserPoints
+        ) {
+          // Vote was restored or updated from server, sync local state
+          this.stateService.selectedPointValue.set(currentUserPoints);
         }
       }
     });
