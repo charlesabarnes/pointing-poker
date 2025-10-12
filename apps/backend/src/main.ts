@@ -2,11 +2,19 @@ import express from 'express';
 import * as http from 'http';
 import * as WebSocket from 'ws';
 import { join } from 'path';
-import { Message, MessageType, ExtWebSocket, MESSAGE_TYPES } from 'shared';
+import { Message, MessageType, ExtWebSocket, MESSAGE_TYPES, SPECIAL_CONTENT } from 'shared';
+import { broadcastToSession, sendToClient, getSessionClients } from './utils/broadcast';
+import { SessionManager } from './session/session-manager';
+import { loadConfig, validateConfig } from './config/environment';
+import { logger } from './utils/logger';
+
+// Load and validate configuration
+const config = loadConfig();
+validateConfig(config);
+logger.setLevel(config.logLevel);
 
 // Express server
 const app = express();
-const PORT: string | number = process.env.PORT || 4000;
 const DIST_FOLDER: string = join(process.cwd(), 'dist/apps/frontend/browser');
 
 // Serve static files from /browser
@@ -21,26 +29,12 @@ app.get('/*path', (req: express.Request, res: express.Response) => {
   res.sendFile(join(DIST_FOLDER, 'index.html'));
 });
 
-// Create message helper
-function createMessage(
-  sender: string = 'NS',
-  content: string | number | undefined,
-  type: MessageType,
-  session?: string,
-  timestamp?: number,
-  fingerprint?: string
-): string {
-  return JSON.stringify(new Message(sender, content, type, session, timestamp, fingerprint));
-}
-
 // Initialize WebSocket server
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// Persistent vote storage (per session, per fingerprint)
-const sessionVotes: Record<string, Record<string, string | number | undefined>> = {};
-// Track if votes have been revealed (shown) per session
-const sessionVotesRevealed: Record<string, boolean> = {};
+// Initialize session manager
+const sessionManager = new SessionManager();
 
 // Handle WebSocket connections
 wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
@@ -51,36 +45,29 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   const extWs = ws as unknown as WebSocket & ExtWebSocket;
   extWs.isAlive = true;
   extWs.session = url.replace('/?session=', '');
+  extWs.lastActivity = Date.now();
+
+  // Update session activity
+  sessionManager.updateSessionActivity(extWs.session);
+
+  // Log connection
+  logger.logConnection(extWs.session);
 
   // Send existing point values to new connection
-  wss.clients.forEach((client: WebSocket) => {
-    const extClient = client as unknown as WebSocket & ExtWebSocket;
-    if (extClient.session === extWs.session) {
-      ws.send(
-        createMessage(
-          extClient.name,
-          extClient.content,
-          MESSAGE_TYPES.POINTS,
-          undefined,
-          undefined,
-          extClient.fingerprint
-        )
-      );
-    }
+  const sessionClients = getSessionClients(wss, extWs.session);
+  sessionClients.forEach((client) => {
+    sendToClient(
+      ws,
+      client.name || 'Unknown',
+      client.content,
+      MESSAGE_TYPES.POINTS,
+      client.fingerprint
+    );
   });
 
   // Send revealed state to new connection if votes are already shown
-  if (sessionVotesRevealed[extWs.session]) {
-    ws.send(
-      createMessage(
-        'server',
-        'votes_revealed',
-        MESSAGE_TYPES.SHOW_VOTES,
-        undefined,
-        Date.now(),
-        undefined
-      )
-    );
+  if (sessionManager.areVotesRevealed(extWs.session)) {
+    sendToClient(ws, 'server', 'votes_revealed', MESSAGE_TYPES.SHOW_VOTES);
   }
 
   // Handle pong response
@@ -92,329 +79,214 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   ws.on('message', (msg: string) => {
     const message = JSON.parse(msg) as Message;
 
+    // Log message
+    logger.logMessage(message.type, extWs.session, message.sender);
+
     // Detect name change (same fingerprint, different name)
     if (extWs.fingerprint === message.fingerprint &&
         extWs.name &&
         extWs.name !== message.sender) {
-      console.log(`Name changed: ${extWs.name} -> ${message.sender} (fingerprint: ${message.fingerprint})`);
+      logger.info('User changed name', {
+        oldName: extWs.name,
+        newName: message.sender,
+        fingerprint: message.fingerprint,
+        sessionId: extWs.session
+      });
 
       // Broadcast name change to all clients in session
-      setTimeout(() => {
-        wss.clients.forEach((client: WebSocket) => {
-          const extClient = client as unknown as WebSocket & ExtWebSocket;
-          if (extClient.session === extWs.session) {
-            client.send(
-              createMessage(
-                message.sender,
-                message.sender, // new name in content
-                MESSAGE_TYPES.NAME_CHANGED,
-                undefined,
-                Date.now(),
-                message.fingerprint
-              )
-            );
-          }
-        });
-      }, 100);
+      broadcastToSession(
+        wss,
+        extWs.session,
+        message.sender,
+        message.sender, // new name in content
+        MESSAGE_TYPES.NAME_CHANGED,
+        message.fingerprint
+      );
     }
 
     extWs.name = message.sender;
     extWs.fingerprint = message.fingerprint;
     extWs.lastActivity = Date.now();
+    sessionManager.updateSessionActivity(extWs.session);
 
     switch (message.type) {
       case MESSAGE_TYPES.CHAT:
-        setTimeout(() => {
-          wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as unknown as WebSocket & ExtWebSocket;
-            if (extClient.session === extWs.session) {
-              client.send(
-                createMessage(
-                  message.sender,
-                  message.content,
-                  MESSAGE_TYPES.CHAT,
-                  undefined,
-                  message.timestamp,
-                  message.fingerprint
-                )
-              );
-            }
-          });
-        }, 100);
+        broadcastToSession(
+          wss,
+          extWs.session,
+          message.sender,
+          message.content,
+          MESSAGE_TYPES.CHAT,
+          message.fingerprint
+        );
         break;
 
       case MESSAGE_TYPES.DESCRIPTION:
-        setTimeout(() => {
-          wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as unknown as WebSocket & ExtWebSocket;
-            if (extClient.session === extWs.session) {
-              client.send(
-                createMessage(
-                  message.sender,
-                  message.content,
-                  MESSAGE_TYPES.DESCRIPTION,
-                  undefined,
-                  message.timestamp,
-                  message.fingerprint
-                )
-              );
-            }
-          });
-        }, 100);
+        broadcastToSession(
+          wss,
+          extWs.session,
+          message.sender,
+          message.content,
+          MESSAGE_TYPES.DESCRIPTION,
+          message.fingerprint
+        );
         break;
 
       case MESSAGE_TYPES.HEARTBEAT:
         // Just mark client as active, no need to broadcast
         extWs.isAlive = true;
         extWs.lastActivity = Date.now();
+        sessionManager.updateSessionActivity(extWs.session);
         break;
 
       case MESSAGE_TYPES.STATUS_AFK:
-        // Broadcast AFK status to all clients in session
-        setTimeout(() => {
-          wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as unknown as WebSocket & ExtWebSocket;
-            if (extClient.session === extWs.session) {
-              client.send(
-                createMessage(
-                  message.sender,
-                  message.content,
-                  MESSAGE_TYPES.STATUS_AFK,
-                  undefined,
-                  message.timestamp,
-                  message.fingerprint
-                )
-              );
-            }
-          });
-        }, 100);
+        broadcastToSession(
+          wss,
+          extWs.session,
+          message.sender,
+          message.content,
+          MESSAGE_TYPES.STATUS_AFK,
+          message.fingerprint
+        );
         break;
 
       case MESSAGE_TYPES.STATUS_ONLINE:
-        // Broadcast online status to all clients in session
-        setTimeout(() => {
-          wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as unknown as WebSocket & ExtWebSocket;
-            if (extClient.session === extWs.session) {
-              client.send(
-                createMessage(
-                  message.sender,
-                  message.content,
-                  MESSAGE_TYPES.STATUS_ONLINE,
-                  undefined,
-                  message.timestamp,
-                  message.fingerprint
-                )
-              );
-            }
-          });
-        }, 100);
+        broadcastToSession(
+          wss,
+          extWs.session,
+          message.sender,
+          message.content,
+          MESSAGE_TYPES.STATUS_ONLINE,
+          message.fingerprint
+        );
         break;
 
       case MESSAGE_TYPES.USER_LEFT:
-        // Broadcast user left to all clients in session
-        setTimeout(() => {
-          wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as unknown as WebSocket & ExtWebSocket;
-            if (extClient.session === extWs.session && ws !== client) {
-              client.send(
-                createMessage(
-                  message.sender,
-                  message.content,
-                  MESSAGE_TYPES.USER_LEFT,
-                  undefined,
-                  message.timestamp,
-                  message.fingerprint
-                )
-              );
-            }
-          });
-        }, 100);
+        // Broadcast user left to all clients in session (exclude sender)
+        broadcastToSession(
+          wss,
+          extWs.session,
+          message.sender,
+          message.content,
+          MESSAGE_TYPES.USER_LEFT,
+          message.fingerprint,
+          ws
+        );
         // Close the connection
         ws.close();
         break;
 
       case MESSAGE_TYPES.JOIN:
-        // Broadcast join message to all clients in the session
-        setTimeout(() => {
-          wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as unknown as WebSocket & ExtWebSocket;
-            if (extClient.session === extWs.session) {
-              client.send(
-                createMessage(
-                  message.sender,
-                  message.content,
-                  MESSAGE_TYPES.JOIN,
-                  undefined,
-                  message.timestamp,
-                  message.fingerprint
-                )
-              );
-            }
-          });
-        }, 100);
+        broadcastToSession(
+          wss,
+          extWs.session,
+          message.sender,
+          message.content,
+          MESSAGE_TYPES.JOIN,
+          message.fingerprint
+        );
         break;
 
       case MESSAGE_TYPES.POINTS:
-        if (message.content === 'ClearVotes') {
-          // Clear persistent vote storage for this session
-          if (sessionVotes[extWs.session]) {
-            delete sessionVotes[extWs.session];
-          }
-          sessionVotesRevealed[extWs.session] = false;
+        if (message.content === SPECIAL_CONTENT.CLEAR_VOTES) {
+          // Backwards compatibility: Handle old 'ClearVotes' message
+          // TODO: Remove this after all clients are updated to use MESSAGE_TYPES.CLEAR_VOTES
+          sessionManager.clearVotes(extWs.session);
 
-          wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as unknown as WebSocket & ExtWebSocket;
-            if (extClient.session === extWs.session) {
-              wss.clients.forEach((connectedClient: WebSocket) => {
-                const extConnectedClient = connectedClient as unknown as WebSocket &
-                  ExtWebSocket;
-                if (
-                  extClient.session === extConnectedClient.session &&
-                  extConnectedClient.content !== 'disconnect'
-                ) {
-                  extConnectedClient.content = undefined;
-                  client.send(
-                    createMessage(
-                      extConnectedClient.name,
-                      undefined,
-                      MESSAGE_TYPES.POINTS,
-                      undefined,
-                      undefined,
-                      extConnectedClient.fingerprint
-                    )
-                  );
-                }
-              });
+          // Clear content for all connected clients and broadcast
+          const sessionClients = getSessionClients(wss, extWs.session);
+          sessionClients.forEach((client) => {
+            if (client.content !== SPECIAL_CONTENT.DISCONNECT) {
+              client.content = undefined;
             }
           });
-        } else if (message.content === 'spectate') {
-          wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as unknown as WebSocket & ExtWebSocket;
-            if (extClient.session === extWs.session) {
-              client.send(
-                createMessage(
-                  extWs.name,
-                  'disconnect',
-                  MESSAGE_TYPES.DISCONNECT,
-                  undefined,
-                  undefined,
-                  extWs.fingerprint
-                )
-              );
-              extWs.content = 'disconnect';
-            }
+
+          // Broadcast cleared state to all clients
+          sessionClients.forEach((client) => {
+            broadcastToSession(
+              wss,
+              extWs.session,
+              client.name || 'Unknown',
+              undefined,
+              MESSAGE_TYPES.POINTS,
+              client.fingerprint
+            );
           });
+        } else if (message.content === SPECIAL_CONTENT.SPECTATE) {
+          // User entering spectator mode
+          extWs.content = SPECIAL_CONTENT.DISCONNECT;
+          broadcastToSession(
+            wss,
+            extWs.session,
+            extWs.name || 'Unknown',
+            SPECIAL_CONTENT.DISCONNECT,
+            MESSAGE_TYPES.DISCONNECT,
+            extWs.fingerprint
+          );
         } else if (message.content === undefined) {
           // Check if this is a reconnection with a stored vote
-          if (message.fingerprint &&
-              sessionVotes[extWs.session] &&
-              sessionVotes[extWs.session][message.fingerprint] !== undefined &&
-              !sessionVotesRevealed[extWs.session]) {
-            // Restore their previous vote
-            const restoredVote = sessionVotes[extWs.session][message.fingerprint];
-            extWs.content = restoredVote;
-
-            // Broadcast the restored vote to all clients in session
-            setTimeout(() => {
-              wss.clients.forEach((client: WebSocket) => {
-                const extClient = client as unknown as WebSocket & ExtWebSocket;
-                if (extClient.session === extWs.session) {
-                  client.send(
-                    createMessage(
-                      message.sender,
-                      restoredVote,
-                      MESSAGE_TYPES.POINTS,
-                      undefined,
-                      message.timestamp,
-                      message.fingerprint
-                    )
-                  );
-                }
-              });
-            }, 100);
+          if (message.fingerprint && !sessionManager.areVotesRevealed(extWs.session)) {
+            const restoredVote = sessionManager.getVote(extWs.session, message.fingerprint);
+            if (restoredVote !== undefined) {
+              // Restore their previous vote
+              extWs.content = restoredVote;
+              broadcastToSession(
+                wss,
+                extWs.session,
+                message.sender,
+                restoredVote,
+                MESSAGE_TYPES.POINTS,
+                message.fingerprint
+              );
+            }
           }
         } else {
           // Regular vote - store and broadcast
           extWs.content = message.content;
 
-          // Store in persistent session votes
-          if (!sessionVotes[extWs.session]) {
-            sessionVotes[extWs.session] = {};
-          }
           if (message.fingerprint) {
-            sessionVotes[extWs.session][message.fingerprint] = message.content;
+            sessionManager.setVote(extWs.session, message.fingerprint, message.content);
           }
 
-          setTimeout(() => {
-            wss.clients.forEach((client: WebSocket) => {
-              const extClient = client as unknown as WebSocket & ExtWebSocket;
-              if (extClient.session === extWs.session) {
-                client.send(
-                  createMessage(
-                    message.sender,
-                    message.content,
-                    MESSAGE_TYPES.POINTS,
-                    undefined,
-                    message.timestamp,
-                    message.fingerprint
-                  )
-                );
-              }
-            });
-          }, 100);
+          broadcastToSession(
+            wss,
+            extWs.session,
+            message.sender,
+            message.content,
+            MESSAGE_TYPES.POINTS,
+            message.fingerprint
+          );
         }
         break;
 
       case MESSAGE_TYPES.SHOW_VOTES:
         // Mark session as revealed (votes shown)
-        sessionVotesRevealed[extWs.session] = true;
+        sessionManager.revealVotes(extWs.session);
 
         // Broadcast show votes action to all clients in session
-        setTimeout(() => {
-          wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as unknown as WebSocket & ExtWebSocket;
-            if (extClient.session === extWs.session) {
-              client.send(
-                createMessage(
-                  message.sender,
-                  message.content,
-                  MESSAGE_TYPES.SHOW_VOTES,
-                  undefined,
-                  message.timestamp,
-                  message.fingerprint
-                )
-              );
-            }
-          });
-        }, 100);
+        broadcastToSession(
+          wss,
+          extWs.session,
+          message.sender,
+          message.content,
+          MESSAGE_TYPES.SHOW_VOTES,
+          message.fingerprint
+        );
         break;
 
       case MESSAGE_TYPES.CLEAR_VOTES:
         // Clear persistent vote storage for this session
-        if (sessionVotes[extWs.session]) {
-          delete sessionVotes[extWs.session];
-        }
-        sessionVotesRevealed[extWs.session] = false;
+        sessionManager.clearVotes(extWs.session);
 
         // Broadcast clear votes action to all clients in session
-        setTimeout(() => {
-          wss.clients.forEach((client: WebSocket) => {
-            const extClient = client as unknown as WebSocket & ExtWebSocket;
-            if (extClient.session === extWs.session) {
-              client.send(
-                createMessage(
-                  message.sender,
-                  message.content,
-                  MESSAGE_TYPES.CLEAR_VOTES,
-                  undefined,
-                  message.timestamp,
-                  message.fingerprint
-                )
-              );
-            }
-          });
-        }, 100);
+        broadcastToSession(
+          wss,
+          extWs.session,
+          message.sender,
+          message.content,
+          MESSAGE_TYPES.CLEAR_VOTES,
+          message.fingerprint
+        );
         break;
 
       default:
@@ -423,29 +295,21 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   });
 
   // Handle errors
-  ws.on('error', () => {
-    wss.clients.forEach((client: WebSocket) => {
-      const extClient = client as unknown as WebSocket & ExtWebSocket;
-      if (extClient.session === extWs.session && ws !== client) {
-        client.send(
-          createMessage(
-            extWs.name,
-            'disconnect',
-            MESSAGE_TYPES.DISCONNECT,
-            undefined,
-            undefined,
-            extWs.fingerprint
-          )
-        );
-      }
-    });
+  ws.on('error', (error) => {
+    logger.logWebSocketError(extWs.session, extWs.name, error as Error);
+    broadcastToSession(
+      wss,
+      extWs.session,
+      extWs.name || 'Unknown',
+      SPECIAL_CONTENT.DISCONNECT,
+      MESSAGE_TYPES.DISCONNECT,
+      extWs.fingerprint,
+      ws
+    );
   });
 });
 
-// Check connections every 30 seconds for better performance
-const CONNECTION_CHECK_INTERVAL = 30000; // 30 seconds
-const INACTIVITY_TIMEOUT = 3600000; // 1 hour
-
+// Check connections periodically using configuration values
 setInterval(() => {
   const now = Date.now();
 
@@ -454,54 +318,61 @@ setInterval(() => {
 
     // Check for ping/pong timeout (connection alive check)
     if (!extWs.isAlive) {
-      wss.clients.forEach((client: WebSocket) => {
-        const extClient = client as unknown as WebSocket & ExtWebSocket;
-        if (extClient.session === extWs.session && ws !== client) {
-          client.send(
-            createMessage(
-              extWs.name,
-              'disconnect',
-              MESSAGE_TYPES.DISCONNECT,
-              undefined,
-              undefined,
-              extWs.fingerprint
-            )
-          );
-        }
-      });
+      broadcastToSession(
+        wss,
+        extWs.session,
+        extWs.name || 'Unknown',
+        SPECIAL_CONTENT.DISCONNECT,
+        MESSAGE_TYPES.DISCONNECT,
+        extWs.fingerprint,
+        ws
+      );
 
-      console.log(`Client disconnected (no pong): ${extWs.name}`);
+      logger.logDisconnect(extWs.session, extWs.name, 'no pong');
       return ws.terminate();
     }
 
-    // Check for inactivity timeout (1 hour)
-    if (extWs.lastActivity && now - extWs.lastActivity > INACTIVITY_TIMEOUT) {
-      wss.clients.forEach((client: WebSocket) => {
-        const extClient = client as unknown as WebSocket & ExtWebSocket;
-        if (extClient.session === extWs.session && ws !== client) {
-          client.send(
-            createMessage(
-              extWs.name,
-              'timeout',
-              MESSAGE_TYPES.DISCONNECT,
-              undefined,
-              undefined,
-              extWs.fingerprint
-            )
-          );
-        }
-      });
+    // Check for inactivity timeout
+    if (extWs.lastActivity && now - extWs.lastActivity > config.inactivityTimeout) {
+      broadcastToSession(
+        wss,
+        extWs.session,
+        extWs.name || 'Unknown',
+        SPECIAL_CONTENT.TIMEOUT,
+        MESSAGE_TYPES.DISCONNECT,
+        extWs.fingerprint,
+        ws
+      );
 
-      console.log(`Client disconnected (timeout): ${extWs.name}`);
+      logger.logDisconnect(extWs.session, extWs.name, 'timeout');
       return ws.terminate();
     }
 
     extWs.isAlive = false;
     ws.ping();
   });
-}, CONNECTION_CHECK_INTERVAL);
+}, config.connectionCheckInterval);
+
+// Clean up inactive sessions periodically to prevent memory leaks
+setInterval(() => {
+  const cleanedCount = sessionManager.cleanupInactiveSessions(config.sessionInactivityThreshold);
+  if (cleanedCount > 0) {
+    const stats = sessionManager.getStats();
+    logger.logSessionCleanup(cleanedCount, stats.activeSessions);
+    logger.debug('Session stats', {
+      activeSessions: stats.activeSessions,
+      totalVotes: stats.totalVotes,
+      revealedSessions: stats.revealedSessions
+    });
+  }
+}, config.sessionCleanupInterval);
 
 // Start the server
-server.listen(PORT, () => {
-  console.log(`Node Express server listening on http://localhost:${PORT}`);
+server.listen(config.port, () => {
+  logger.info(`Server started`, {
+    port: config.port,
+    nodeEnv: config.nodeEnv,
+    logLevel: config.logLevel
+  });
+  logger.info(`Serving static files from: ${DIST_FOLDER}`);
 });

@@ -84,7 +84,7 @@ export class AppComponent implements OnInit {
   private generateSessionId(length: number): string {
     let result = '';
     for (let i = 0; i < length; i++) {
-      result += CHAR_SET.charAt(Math.floor(Math.random() * length));
+      result += CHAR_SET.charAt(Math.floor(Math.random() * CHAR_SET.length));
     }
     return result;
   }

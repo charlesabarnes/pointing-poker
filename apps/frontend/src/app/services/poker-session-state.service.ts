@@ -97,6 +97,8 @@ export class PokerSessionStateService {
    */
   public setSpectatorMode(isSpectator: boolean): void {
     this.isSpectator.set(isSpectator);
+    // Note: Using 'spectate' string for backwards compatibility
+    // TODO: Update to use SPECIAL_CONTENT.SPECTATE after backend migration
     this.wsService.send(isSpectator ? 'spectate' : 0);
   }
 

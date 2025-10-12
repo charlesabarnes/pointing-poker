@@ -39,26 +39,57 @@ pointing-poker/
 * **Build Tools**: Nx, Webpack
 * Node.js 18.3.0 or higher required
 
+## Architecture Highlights
+
+* **Modular Backend**: Organized with utility functions, session manager, and structured logging
+* **Type Safety**: Shared types and message constants across frontend and backend
+* **Session Management**: Automatic cleanup of inactive sessions to prevent memory leaks
+* **Structured Logging**: Configurable log levels with contextual information
+* **Environment Configuration**: All settings configurable via environment variables
+* **User Fingerprinting**: Persistent user identification across name changes
+
 ## How to run Pointing Poker
 
-* **Development Mode**
+### Configuration
+
+Configuration is managed through environment variables. See `.env.example` for all available options:
+
+```bash
+cp .env.example .env
+# Edit .env with your preferred settings
+```
+
+Key configuration options:
+- `PORT`: Server port (default: 4000)
+- `LOG_LEVEL`: Logging verbosity (debug, info, warn, error)
+- `WS_INACTIVITY_TIMEOUT`: How long before disconnecting inactive clients
+- `SESSION_CLEANUP_INTERVAL`: How often to clean up old sessions
+
+### Development Mode
 
 1. Clone the repository
 2. cd into the directory
 3. Install dependencies: `npm install`
-4. Run both frontend and backend: `npm run start:dev`
+4. (Optional) Configure environment variables: `cp .env.example .env`
+5. Run both frontend and backend: `npm run start:dev`
    - Or run separately:
      - Frontend only: `npm run serve:frontend` (runs on port 4200)
      - Backend only: `npm run serve:backend` (runs on port 4000)
 
-* **Production Mode**
+### Production Mode
 
 1. Clone the repository
 2. cd into the directory
 3. Install dependencies: `npm install`
-4. Build all projects: `npm run build`
-5. Start the server: `npm start`
-6. The app should now be running by default on port 4000
+4. Configure environment: `cp .env.example .env` and set `NODE_ENV=production`
+5. Build all projects: `npm run build`
+6. Start the server: `npm start`
+7. The app should now be running by default on port 4000
+
+**Production Tips:**
+- Set `LOG_LEVEL=warn` to reduce log verbosity
+- Configure `SESSION_CLEANUP_INTERVAL` based on your expected session lifespan
+- Enable `ENABLE_ACCESS_LOG=true` for HTTP request logging
 
 * **Heroku**
 

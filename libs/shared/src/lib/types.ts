@@ -1,4 +1,16 @@
 /**
+ * Special content values used in WebSocket messages
+ */
+export const SPECIAL_CONTENT = {
+  SPECTATE: 'spectate',
+  DISCONNECT: 'disconnect',
+  TIMEOUT: 'timeout',
+  CLEAR_VOTES: 'ClearVotes', // Backwards compatibility - to be deprecated
+} as const;
+
+export type SpecialContent = typeof SPECIAL_CONTENT[keyof typeof SPECIAL_CONTENT];
+
+/**
  * Extended WebSocket interface used by the backend
  */
 export interface ExtWebSocket {

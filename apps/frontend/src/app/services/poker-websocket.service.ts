@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, OnDestroy } from '@angular/core';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { Subject, Observable } from 'rxjs';
-import { Message, MessageType, UserActivity, PointValues, MESSAGE_TYPES } from 'shared';
+import { Message, MessageType, UserActivity, PointValues, MESSAGE_TYPES, SPECIAL_CONTENT } from 'shared';
 import { UserFingerprintService } from './user-fingerprint.service';
 import { UserActivityService } from './user-activity.service';
 
@@ -479,7 +479,8 @@ export class PokerWebSocketService implements OnDestroy {
     // Also clear the description
     this.send('', MESSAGE_TYPES.DESCRIPTION);
     // Still send the old ClearVotes message for backwards compatibility
-    this.send('ClearVotes');
+    // TODO: Remove this after backend migration is complete
+    this.send(SPECIAL_CONTENT.CLEAR_VOTES);
   }
 
   /**
