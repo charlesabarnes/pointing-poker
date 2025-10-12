@@ -17,7 +17,7 @@ app.use(
 );
 
 // All regular routes use the index.html
-app.get('*', (req: express.Request, res: express.Response) => {
+app.get('/*path', (req: express.Request, res: express.Response) => {
   res.sendFile(join(DIST_FOLDER, 'index.html'));
 });
 

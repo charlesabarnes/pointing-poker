@@ -30,9 +30,9 @@
               </button>
             </div>
 
-            <div *ngIf="!spectator" class="point-value-container">
+            <div *ngIf="!_spectator()" class="point-value-container">
               <h3><fa-icon [icon]="faFlag"></fa-icon> Select Point Value</h3>
-              <mat-button-toggle-group [(ngModel)]="selectedPointValue" (change)="send($event.value)">
+              <mat-button-toggle-group [ngModel]="selectedPointValue()" (ngModelChange)="selectedPointValue.set($event)" (change)="send($event.value)">
                 <mat-button-toggle *ngFor="let option of options" [value]="option.value" [disabled]="option.disabled">
                   {{option.label}}
                 </mat-button-toggle>
@@ -42,25 +42,25 @@
             <div class="point-value-container spectator-container">
               <h3><fa-icon [icon]="faEye"></fa-icon> Participant Mode</h3>
               <div class="spectator-toggle">
-                <span [ngClass]="{'active': !spectator}">Voter</span>
-                <mat-slide-toggle [(ngModel)]="spectator"></mat-slide-toggle>
-                <span [ngClass]="{'active': spectator}">Spectator</span>
+                <span [ngClass]="{'active': !_spectator()}">Voter</span>
+                <mat-slide-toggle [ngModel]="_spectator()" (ngModelChange)="_spectator.set($event)"></mat-slide-toggle>
+                <span [ngClass]="{'active': _spectator()}">Spectator</span>
               </div>
             </div>
           </div>
 
           <div class="right-panel">
             <div class="chart-container">
-              <div *ngIf="!showChart" class="waiting-for-votes">
+              <div *ngIf="!showChart()" class="waiting-for-votes">
                 <fa-icon [icon]="faClock"></fa-icon>
                 <h3>Waiting for votes...</h3>
                 <p>Point values will appear here once everyone has voted.</p>
               </div>
-              <canvas *ngIf="showChart" baseChart
+              <canvas *ngIf="showChart()" baseChart
                 [data]="{
-                  labels: pointDistributionChartLabels,
+                  labels: pointDistributionChartLabels(),
                   datasets: [{
-                    data: pointDistributionChartData,
+                    data: pointDistributionChartData(),
                     backgroundColor: ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0']
                   }]
                 }"
@@ -84,9 +84,9 @@
 
       <mat-card-content>
         <!-- User join notification -->
-        <div *ngIf="newUserJoined" class="user-joined-notification">
+        <div *ngIf="newUserJoined()" class="user-joined-notification">
           <fa-icon [icon]="faUserPlus"></fa-icon>
-          <span>{{ recentJoinedUser }} has joined the session</span>
+          <span>{{ recentJoinedUser() }} has joined the session</span>
         </div>
 
         <div class="point-list">
@@ -101,8 +101,8 @@
               <h3>Points</h3>
             </div>
           </div>
-          <ng-container *ngFor="let userName of userNames">
-            <div class="user-info" *ngIf="pointValues[userName] !== 'disconnect'"
+          <ng-container *ngFor="let userName of userNames()">
+            <div class="user-info" *ngIf="pointValues()[userName] !== 'disconnect'"
                  [ngClass]="{'current-user': userName == name}">
               <div class="player-name">
                 <span>{{userName}}</span>
@@ -111,25 +111,25 @@
               <div class="status-indicator">
                 <span class="status-dot"
                   [ngClass]="{
-                    'status-online': userActivity[userName]?.status === 'online',
-                    'status-away': userActivity[userName]?.status === 'away',
-                    'status-offline': userActivity[userName]?.status === 'offline' || !userActivity[userName]
+                    'status-online': userActivity()[userName]?.status === 'online',
+                    'status-away': userActivity()[userName]?.status === 'away',
+                    'status-offline': userActivity()[userName]?.status === 'offline' || !userActivity()[userName]
                   }"
-                  [title]="userActivity[userName]?.status || 'offline'">
+                  [title]="userActivity()[userName]?.status || 'offline'">
                 </span>
-                <span class="status-text">{{ userActivity[userName]?.status || 'offline' }}</span>
+                <span class="status-text">{{ userActivity()[userName]?.status || 'offline' }}</span>
               </div>
               <div class="point-value">
-                <span *ngIf="showValues" class="vote-value">{{pointValues[userName]}}</span>
-                <div *ngIf="!showValues" class="vote-status">
+                <span *ngIf="showValues()" class="vote-value">{{pointValues()[userName]}}</span>
+                <div *ngIf="!showValues()" class="vote-status">
                   <fa-icon
-                    [icon]="pointValues[userName] ? faCheckCircle : faCircle"
+                    [icon]="pointValues()[userName] ? faCheckCircle : faCircle"
                     [ngClass]="{
-                      'has-voted': pointValues[userName],
-                      'no-vote': !pointValues[userName]
+                      'has-voted': pointValues()[userName],
+                      'no-vote': !pointValues()[userName]
                     }">
                   </fa-icon>
-                  <span>{{ pointValues[userName] ? 'Voted' : 'Not voted' }}</span>
+                  <span>{{ pointValues()[userName] ? 'Voted' : 'Not voted' }}</span>
                 </div>
               </div>
             </div>
@@ -153,7 +153,7 @@
       <mat-card-content>
         <div class="chat">
           <div #scroller class="chat-box">
-            <div *ngFor="let chat of chatLog"
+            <div *ngFor="let chat of chatLog()"
                  [ngClass]="{
                    'chat-row': chat.type === 'chat',
                    'system-message': chat.type === 'join'
