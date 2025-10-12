@@ -1,5 +1,9 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global styles - Design system powered */
 @use '@angular/material' as mat;
+
+// Import design system
+@import 'variables';
+@import 'mixins';
 
 // Include the common styles for Angular Material
 @include mat.core();
@@ -15,39 +19,68 @@ $custom-theme: mat.define-theme((
 // Include theme styles for core and each component used in your app
 @include mat.all-component-themes($custom-theme);
 
+// ============================================================================
+// BASE STYLES
+// ============================================================================
+
 body {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
-  background-color: #F4F4F4;
-  color: #333;
+  font-family: $font-family-base;
+  background: $gradient-primary;
+  color: $color-text-primary;
+  min-height: 100vh;
 }
 
-// Custom global styles for the app
-.mat-mdc-card {
-  background-color: #3D464D;
-  color: #FFF;
+// ============================================================================
+// ACCESSIBILITY - Skip Links
+// ============================================================================
+
+.skip-link {
+  @include skip-link;
 }
+
+// ============================================================================
+// MATERIAL OVERRIDES
+// ============================================================================
+
+.mat-mdc-card {
+  background-color: $color-bg-card;
+  color: $color-text-primary;
+}
+
+.mat-mdc-form-field input {
+  color: $color-text-primary;
+}
+
+// ============================================================================
+// UTILITY CLASSES
+// ============================================================================
 
 .full-width {
-  width: 100%;
+  @include full-width;
 }
 
 .spacer {
   flex: 1 1 auto;
 }
 
-// Custom styles for mat-button-toggle-group
+.sr-only {
+  @include sr-only;
+}
+
+// ============================================================================
+// COMPONENT STYLES
+// ============================================================================
+
+// Material button toggle group
 mat-button-toggle-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-}
+  gap: $spacing-sm;
 
-// Specific styling for the app
-app-poker-session {
-  .top-card {
-    .mat-mdc-form-field input {
-      color: #F4F4F4 !important;
+  mat-button-toggle {
+    &:focus-visible {
+      @include focus-outline;
     }
   }
 }
@@ -55,4 +88,20 @@ app-poker-session {
 // FontAwesome icon alignment
 fa-icon {
   vertical-align: middle;
+}
+
+// ============================================================================
+// FOCUS MANAGEMENT
+// ============================================================================
+
+// Ensure all interactive elements have visible focus
+button,
+a,
+input,
+select,
+textarea,
+[tabindex]:not([tabindex="-1"]) {
+  &:focus-visible {
+    @include focus-outline;
+  }
 }

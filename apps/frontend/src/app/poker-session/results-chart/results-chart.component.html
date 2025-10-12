@@ -1,10 +1,14 @@
-<div class="chart-container">
-  <div *ngIf="!stateService.showChart()" class="waiting-for-votes">
-    <fa-icon [icon]="faClock"></fa-icon>
+<div class="chart-container" role="region" aria-label="Voting Results Visualization">
+  <div *ngIf="!stateService.showChart()"
+       class="waiting-for-votes"
+       role="status"
+       aria-live="polite">
+    <fa-icon [icon]="faClock" aria-hidden="true"></fa-icon>
     <h3>Waiting for votes...</h3>
     <p>Point values will appear here once everyone has voted.</p>
   </div>
-  <canvas *ngIf="stateService.showChart()" baseChart
+  <canvas *ngIf="stateService.showChart()"
+    baseChart
     [data]="{
       labels: chartLabels(),
       datasets: [{
@@ -14,6 +18,8 @@
     }"
     [options]="chartOptions"
     [type]="chartType"
-    [plugins]="plugins">
+    [plugins]="plugins"
+    role="img"
+    [attr.aria-label]="getChartAccessibleDescription()">
   </canvas>
 </div>

@@ -1,31 +1,42 @@
 <div class="poker-session-container">
-  <div class="top-card">
+  <!-- Skip to main content link for keyboard navigation -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Main session controls and voting -->
+  <section class="top-card" aria-labelledby="session-title">
     <mat-card class="main-session-card">
       <mat-card-header>
-        <mat-card-title>Planning Poker Session</mat-card-title>
+        <mat-card-title id="session-title">Planning Poker Session</mat-card-title>
       </mat-card-header>
 
-      <mat-card-content>
+      <mat-card-content id="main-content">
         <div class="main-content">
-          <div class="left-panel">
+          <!-- Story controls and voting section -->
+          <section class="left-panel" aria-label="Story and Voting Controls">
             <app-story-controls
               (clearVotes)="onClearVotes()"
               (showVotes)="onShowVotes()">
             </app-story-controls>
 
             <app-voting-panel></app-voting-panel>
-          </div>
+          </section>
 
-          <div class="right-panel">
+          <!-- Results visualization section -->
+          <aside class="right-panel" aria-label="Voting Results">
             <app-results-chart></app-results-chart>
-          </div>
+          </aside>
         </div>
       </mat-card-content>
     </mat-card>
-  </div>
+  </section>
 
+  <!-- Participants and chat sections -->
   <div class="mid-cards">
-    <app-participants-list [currentUserName]="name"></app-participants-list>
-    <app-chat-panel></app-chat-panel>
+    <aside aria-label="Session Participants">
+      <app-participants-list [currentUserName]="name"></app-participants-list>
+    </aside>
+    <aside aria-label="Team Chat">
+      <app-chat-panel></app-chat-panel>
+    </aside>
   </div>
 </div>

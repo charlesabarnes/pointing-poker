@@ -116,4 +116,27 @@ export class ResultsChartComponent {
     }
     return pointValueCounts;
   }
+
+  /**
+   * Generate accessible description of chart data for screen readers
+   */
+  public getChartAccessibleDescription(): string {
+    const pointValueCounts = this.getPointValueCountObject();
+    const entries = Object.entries(pointValueCounts);
+
+    if (entries.length === 0) {
+      return 'No votes recorded yet';
+    }
+
+    if (entries.length === 1) {
+      const [value, count] = entries[0];
+      return `Consensus reached: ${count} vote${count > 1 ? 's' : ''} for ${value} points`;
+    }
+
+    const description = entries
+      .map(([value, count]) => `${value} points: ${count} vote${count > 1 ? 's' : ''}`)
+      .join(', ');
+
+    return `Voting results chart showing: ${description}`;
+  }
 }

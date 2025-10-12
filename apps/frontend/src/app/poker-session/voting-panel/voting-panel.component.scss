@@ -1,40 +1,43 @@
+@import 'variables';
+@import 'mixins';
+
 .point-value-container {
-  margin-bottom: 1.5rem;
+  margin-bottom: $spacing-xl;
 }
 
 .point-value-container h3 {
-  margin-bottom: 1rem;
+  margin-bottom: $spacing-lg;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: $spacing-sm;
 }
 
 mat-button-toggle-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: $spacing-sm;
 }
 
 .spectator-container {
-  margin-top: 2rem;
+  margin-top: $spacing-2xl;
 }
 
 .spectator-toggle {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
+  gap: $spacing-lg;
+  padding: $spacing-lg;
+  background: $color-overlay-medium;
+  border-radius: $border-radius-lg;
 }
 
 .spectator-toggle span {
-  color: rgba(255, 255, 255, 0.5);
-  font-weight: 500;
-  transition: color 0.3s ease;
+  color: $color-text-tertiary;
+  font-weight: $font-weight-medium;
+  @include transition(color, font-weight);
 }
 
 .spectator-toggle span.active {
-  color: #fff;
-  font-weight: 600;
+  color: $color-text-primary;
+  font-weight: $font-weight-semibold;
 }

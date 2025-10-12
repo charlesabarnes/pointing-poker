@@ -1,39 +1,30 @@
+@import 'variables';
+@import 'mixins';
+
 .chart-container {
-  width: 100%;
+  @include full-width;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   min-height: 300px;
 }
 
 .waiting-for-votes {
   text-align: center;
-  color: rgba(255, 255, 255, 0.7);
+  color: $color-text-secondary;
 }
 
 .waiting-for-votes fa-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-  animation: pulse 2s ease-in-out infinite;
+  font-size: $font-size-2xl;
+  margin-bottom: $spacing-lg;
+  @include pulse;
 }
 
 .waiting-for-votes h3 {
-  margin: 1rem 0 0.5rem 0;
-  font-size: 1.5rem;
+  margin: $spacing-lg 0 $spacing-sm 0;
+  font-size: $font-size-lg;
 }
 
 .waiting-for-votes p {
   margin: 0;
-  font-size: 0.9rem;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.7;
-  }
+  font-size: $font-size-base;
 }

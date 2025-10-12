@@ -1,0 +1,139 @@
+// Design System Variables
+// This file centralizes all design tokens for consistency and maintainability
+
+// ============================================================================
+// COLOR PALETTE
+// ============================================================================
+
+// Primary Colors
+$color-primary: #4A89DC;
+$color-primary-light: rgba(74, 137, 220, 0.2);
+$color-success: #8CC152;
+$color-success-light: rgba(140, 193, 82, 0.2);
+$color-warning: #F6B042;
+$color-danger: #E9573F;
+
+// Background Colors
+$color-bg-dark: #1e2433;
+$color-bg-darker: #2F384F;
+$color-bg-card: #3D464D;
+
+// Text Colors
+$color-text-primary: #FFFFFF;
+$color-text-secondary: rgba(255, 255, 255, 0.8);
+$color-text-tertiary: rgba(255, 255, 255, 0.6);
+$color-text-disabled: rgba(255, 255, 255, 0.3);
+
+// Overlay Colors
+$color-overlay-light: rgba(255, 255, 255, 0.05);
+$color-overlay-medium: rgba(0, 0, 0, 0.2);
+$color-overlay-dark: rgba(0, 0, 0, 0.3);
+
+// Status Colors
+$color-status-online: #8CC152;
+$color-status-away: #F6B042;
+$color-status-offline: #666666;
+
+// ============================================================================
+// SPACING SCALE
+// ============================================================================
+
+$spacing-xs: 0.25rem;   // 4px
+$spacing-sm: 0.5rem;    // 8px
+$spacing-md: 0.75rem;   // 12px
+$spacing-lg: 1rem;      // 16px
+$spacing-xl: 1.5rem;    // 24px
+$spacing-2xl: 2rem;     // 32px
+$spacing-3xl: 3rem;     // 48px
+
+// ============================================================================
+// TYPOGRAPHY
+// ============================================================================
+
+$font-family-base: Roboto, "Helvetica Neue", sans-serif;
+
+$font-size-xs: 0.75rem;   // 12px
+$font-size-sm: 0.85rem;   // ~14px
+$font-size-base: 0.9rem;  // ~14.4px
+$font-size-md: 1rem;      // 16px
+$font-size-lg: 1.5rem;    // 24px
+$font-size-xl: 2rem;      // 32px
+$font-size-2xl: 4rem;     // 64px
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// ============================================================================
+// BORDERS & RADIUS
+// ============================================================================
+
+$border-radius-sm: 4px;
+$border-radius-md: 6px;
+$border-radius-lg: 8px;
+$border-radius-xl: 12px;
+$border-radius-full: 50%;
+
+$border-width-sm: 1px;
+$border-width-md: 2px;
+$border-width-lg: 3px;
+$border-width-xl: 4px;
+
+// ============================================================================
+// SHADOWS
+// ============================================================================
+
+$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+$shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.3);
+$shadow-glow-success: 0 0 10px rgba(140, 193, 82, 0.5);
+
+// ============================================================================
+// TRANSITIONS
+// ============================================================================
+
+$transition-fast: 0.15s ease;
+$transition-base: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// ============================================================================
+// Z-INDEX SCALE
+// ============================================================================
+
+$z-base: 1;
+$z-dropdown: 100;
+$z-overlay: 200;
+$z-modal: 300;
+$z-notification: 400;
+
+// ============================================================================
+// GRADIENTS
+// ============================================================================
+
+$gradient-primary: linear-gradient(135deg, $color-bg-darker 0%, $color-bg-dark 100%);
+$gradient-reverse: linear-gradient(135deg, $color-bg-dark 0%, $color-bg-darker 100%);
+
+// ============================================================================
+// BREAKPOINTS (for responsive design)
+// ============================================================================
+
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+$breakpoint-2xl: 1400px;
+
+// ============================================================================
+// ACCESSIBILITY
+// ============================================================================
+
+// Focus indicator
+$focus-outline-width: 2px;
+$focus-outline-offset: 2px;
+$focus-outline-color: $color-primary;
+$focus-outline-style: solid;
+
+// Minimum contrast ratios (WCAG 2.1 AA)
+// Text: 4.5:1 for normal text, 3:1 for large text
+// UI Components: 3:1 for borders and controls

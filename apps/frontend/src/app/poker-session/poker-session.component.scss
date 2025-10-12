@@ -1,67 +1,47 @@
+@import 'variables';
+@import 'mixins';
+
 :host {
   .poker-session-container {
-    padding: 2rem;
+    padding: $spacing-2xl;
     min-height: 100vh;
-    background: linear-gradient(135deg, #1e2433 0%, #2F384F 100%);
+    background: $gradient-reverse;
   }
 
   .top-card {
-    margin-bottom: 2rem;
+    margin-bottom: $spacing-2xl;
 
     .main-session-card {
-      background: linear-gradient(135deg, #2F384F 0%, #1e2433 100%);
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      overflow: hidden;
+      @include card-base;
 
       mat-card-header {
-        background: rgba(0, 0, 0, 0.2);
-        padding: 1.5rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        @include card-header;
 
         mat-card-title {
-          color: #fff;
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin: 0;
+          @include card-title;
         }
       }
 
       mat-card-content {
-        padding: 2rem;
+        @include card-content;
       }
 
       .main-content {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-
-        @media (max-width: 992px) {
-          grid-template-columns: 1fr;
-        }
+        @include grid-responsive(2, $spacing-2xl, $breakpoint-lg);
       }
 
       .left-panel {
-        display: flex;
-        flex-direction: column;
+        @include flex-column;
       }
 
       .right-panel {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        @include flex-center;
         min-height: 400px;
       }
     }
   }
 
   .mid-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-
-    @media (max-width: 992px) {
-      grid-template-columns: 1fr;
-    }
+    @include grid-responsive(2, $spacing-2xl, $breakpoint-lg);
   }
 }
