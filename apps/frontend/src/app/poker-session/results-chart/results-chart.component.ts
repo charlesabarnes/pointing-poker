@@ -94,7 +94,7 @@ export class ResultsChartComponent {
   ) {
     // Effect to trigger confetti when consensus is reached
     effect(() => {
-      if (this.hasConsensus() && !this.stateService.confettiShot()) {
+      if (this.stateService.showChart() && this.hasConsensus() && !this.stateService.confettiShot()) {
         createConfettiCanvas({
           shapes: ['square'],
           particleCount: 100,

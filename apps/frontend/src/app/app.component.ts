@@ -37,6 +37,7 @@ export class AppComponent implements OnInit {
 
   public name: string;
   public showConnectionStatus = false;
+  private pendingSessionId: string | null = null;
 
   constructor(
     public dialog: MatDialog,
@@ -46,8 +47,23 @@ export class AppComponent implements OnInit {
   }
 
   public ngOnInit(): void {
-    this.name = sessionStorage.getItem(POKER_NAME);
-    if (!this.name) {
+    // Try sessionStorage first, fall back to localStorage for persistence
+    this.name = sessionStorage.getItem(POKER_NAME) || localStorage.getItem(POKER_NAME);
+    if (this.name) {
+      // Ensure both storages are in sync
+      sessionStorage.setItem(POKER_NAME, this.name);
+    } else {
+      // Check if trying to navigate to a session without a name
+      const currentUrl = this.router.url;
+      const sessionMatch = currentUrl.match(/\/session\/([^\/\?]+)/);
+
+      if (sessionMatch) {
+        // Store the intended session ID and navigate to home
+        this.pendingSessionId = sessionMatch[1];
+        this.router.navigate(['/']);
+      }
+
+      // Prompt for name
       this.changeName();
     }
 
@@ -76,11 +92,25 @@ export class AppComponent implements OnInit {
 
   private startSession(name: string): void {
     if (name) {
+      this.name = name;
       sessionStorage.setItem(POKER_NAME, name);
-      if (this.router.url === '/') {
-        setTimeout( () => { this.router.navigate([`/session/${this.generateSessionId(30)}`]); }, 500);
+      localStorage.setItem(POKER_NAME, name); // Persist across sessions
+
+      // Check if we have a pending session ID from initial navigation
+      if (this.pendingSessionId) {
+        const sessionId = this.pendingSessionId;
+        this.pendingSessionId = null; // Clear it
+        setTimeout(() => { this.router.navigate([`/session/${sessionId}`]); }, 500);
+      } else if (this.router.url === '/') {
+        // Create a new session
+        setTimeout(() => { this.router.navigate([`/session/${this.generateSessionId(30)}`]); }, 500);
       } else {
-        location.reload();
+        // Stay on current session URL and let the component load
+        // Extract the current URL and navigate to it to trigger component initialization
+        const currentUrl = this.router.url;
+        this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+          this.router.navigateByUrl(currentUrl);
+        });
       }
     }
   }

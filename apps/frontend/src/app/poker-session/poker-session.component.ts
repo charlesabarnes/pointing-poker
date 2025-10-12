@@ -66,7 +66,8 @@ export class PokerSessionComponent implements OnInit, OnDestroy {
   public ngOnInit() {
     try {
       this.id = this.route.snapshot.paramMap.get('id');
-      this.name = sessionStorage.getItem('POKER_NAME');
+      // Try sessionStorage first, fall back to localStorage
+      this.name = sessionStorage.getItem('POKER_NAME') || localStorage.getItem('POKER_NAME');
 
       // Validate session parameters
       if (!this.id) {
@@ -80,6 +81,9 @@ export class PokerSessionComponent implements OnInit, OnDestroy {
         this.router.navigate(['/']);
         return;
       }
+
+      // Ensure both storages are in sync
+      sessionStorage.setItem('POKER_NAME', this.name);
 
       // Connect to WebSocket
       this.wsService.connect(this.id, this.name);
