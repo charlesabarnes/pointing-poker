@@ -56,15 +56,19 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   logger.logConnection(extWs.session);
 
   // Send existing point values to new connection
+  // Exclude clients without fingerprints (not yet identified)
   const sessionClients = getSessionClients(wss, extWs.session);
   sessionClients.forEach((client) => {
-    sendToClient(
-      ws,
-      client.name || 'Unknown',
-      client.content,
-      MESSAGE_TYPES.POINTS,
-      client.fingerprint
-    );
+    // Only send state for clients that have been properly identified
+    if (client.fingerprint) {
+      sendToClient(
+        ws,
+        client.name || 'Unknown',
+        client.content,
+        MESSAGE_TYPES.POINTS,
+        client.fingerprint
+      );
+    }
   });
 
   // Send revealed state to new connection if votes are already shown

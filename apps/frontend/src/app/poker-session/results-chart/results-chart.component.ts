@@ -68,18 +68,6 @@ export class ResultsChartComponent {
         data.push(pointValueCounts[pointValue]);
       }
     }
-
-    // Trigger confetti if consensus is reached
-    if (Object.keys(pointValueCounts).length === 1 && !this.stateService.confettiShot()) {
-      createConfettiCanvas({
-        shapes: ['square'],
-        particleCount: 100,
-        spread: 70,
-        angle: 42,
-      });
-      this.stateService.markConfettiShot();
-    }
-
     return data;
   });
 
@@ -94,13 +82,25 @@ export class ResultsChartComponent {
     return data;
   });
 
+  // Computed signal to detect consensus (all votes are the same)
+  public hasConsensus = computed(() => {
+    const pointValueCounts = this.getPointValueCountObject();
+    return Object.keys(pointValueCounts).length === 1 && Object.values(pointValueCounts)[0] > 0;
+  });
+
   constructor(
     public stateService: PokerSessionStateService,
     private wsService: PokerWebSocketService
   ) {
-    // Effect to set confetti flag when chart appears
+    // Effect to trigger confetti when consensus is reached
     effect(() => {
-      if (this.stateService.showChart()) {
+      if (this.hasConsensus() && !this.stateService.confettiShot()) {
+        createConfettiCanvas({
+          shapes: ['square'],
+          particleCount: 100,
+          spread: 70,
+          angle: 42,
+        });
         this.stateService.markConfettiShot();
       }
     });
