@@ -1,0 +1,19 @@
+<div class="chart-container">
+  <div *ngIf="!stateService.showChart()" class="waiting-for-votes">
+    <fa-icon [icon]="faClock"></fa-icon>
+    <h3>Waiting for votes...</h3>
+    <p>Point values will appear here once everyone has voted.</p>
+  </div>
+  <canvas *ngIf="stateService.showChart()" baseChart
+    [data]="{
+      labels: chartLabels(),
+      datasets: [{
+        data: chartData(),
+        backgroundColor: colors
+      }]
+    }"
+    [options]="chartOptions"
+    [type]="chartType"
+    [plugins]="plugins">
+  </canvas>
+</div>

@@ -1,5 +1,4 @@
 <div class="poker-session-container">
-
   <div class="top-card">
     <mat-card class="main-session-card">
       <mat-card-header>
@@ -9,181 +8,24 @@
       <mat-card-content>
         <div class="main-content">
           <div class="left-panel">
-            <div class="story-section">
-              <h3><fa-icon [icon]="faStickyNote"></fa-icon> Story Description</h3>
-              <form [formGroup]="form" *ngIf="form">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Story Description</mat-label>
-                  <input matInput formControlName="storyDescription" placeholder="Story Description">
-                </mat-form-field>
-              </form>
-            </div>
+            <app-story-controls
+              (clearVotes)="onClearVotes()"
+              (showVotes)="onShowVotes()">
+            </app-story-controls>
 
-            <div class="action-buttons">
-              <button mat-raised-button color="warn" (click)="clearVotes()">
-                <fa-icon [icon]="faTimes"></fa-icon>
-                Clear Votes
-              </button>
-              <button mat-raised-button color="primary" (click)="doShowValues()">
-                <fa-icon [icon]="faEye"></fa-icon>
-                Show Votes
-              </button>
-            </div>
-
-            <div *ngIf="!_spectator()" class="point-value-container">
-              <h3><fa-icon [icon]="faFlag"></fa-icon> Select Point Value</h3>
-              <mat-button-toggle-group [ngModel]="selectedPointValue()" (ngModelChange)="selectedPointValue.set($event)" (change)="send($event.value)">
-                <mat-button-toggle *ngFor="let option of options" [value]="option.value" [disabled]="option.disabled">
-                  {{option.label}}
-                </mat-button-toggle>
-              </mat-button-toggle-group>
-            </div>
-
-            <div class="point-value-container spectator-container">
-              <h3><fa-icon [icon]="faEye"></fa-icon> Participant Mode</h3>
-              <div class="spectator-toggle">
-                <span [ngClass]="{'active': !_spectator()}">Voter</span>
-                <mat-slide-toggle [ngModel]="_spectator()" (ngModelChange)="_spectator.set($event)"></mat-slide-toggle>
-                <span [ngClass]="{'active': _spectator()}">Spectator</span>
-              </div>
-            </div>
+            <app-voting-panel></app-voting-panel>
           </div>
 
           <div class="right-panel">
-            <div class="chart-container">
-              <div *ngIf="!showChart()" class="waiting-for-votes">
-                <fa-icon [icon]="faClock"></fa-icon>
-                <h3>Waiting for votes...</h3>
-                <p>Point values will appear here once everyone has voted.</p>
-              </div>
-              <canvas *ngIf="showChart()" baseChart
-                [data]="{
-                  labels: pointDistributionChartLabels(),
-                  datasets: [{
-                    data: pointDistributionChartData(),
-                    backgroundColor: ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0']
-                  }]
-                }"
-                [options]="pointDistributionChartOptions"
-                [type]="pointDistributionChartType"
-                [plugins]="pieChartPlugins">
-              </canvas>
-            </div>
+            <app-results-chart></app-results-chart>
           </div>
         </div>
       </mat-card-content>
     </mat-card>
   </div>
 
-
   <div class="mid-cards">
-    <mat-card class="participants-card">
-      <mat-card-header>
-        <mat-card-title><fa-icon [icon]="faUser"></fa-icon> Participants</mat-card-title>
-      </mat-card-header>
-
-      <mat-card-content>
-        <!-- User join notification -->
-        <div *ngIf="newUserJoined()" class="user-joined-notification">
-          <fa-icon [icon]="faUserPlus"></fa-icon>
-          <span>{{ recentJoinedUser() }} has joined the session</span>
-        </div>
-
-        <div class="point-list">
-          <div class="user-info user-info-header">
-            <div class="player-name">
-              <h3>Player</h3>
-            </div>
-            <div class="status-indicator">
-              <h3>Status</h3>
-            </div>
-            <div class="point-value">
-              <h3>Points</h3>
-            </div>
-          </div>
-          <ng-container *ngFor="let userName of userNames()">
-            <div class="user-info" *ngIf="pointValues()[userName] !== 'disconnect'"
-                 [ngClass]="{'current-user': userName == name}">
-              <div class="player-name">
-                <span>{{userName}}</span>
-                <fa-icon *ngIf="userName == name" [icon]="faUserCircle" title="You"></fa-icon>
-              </div>
-              <div class="status-indicator">
-                <span class="status-dot"
-                  [ngClass]="{
-                    'status-online': userActivity()[userName]?.status === 'online',
-                    'status-away': userActivity()[userName]?.status === 'away',
-                    'status-offline': userActivity()[userName]?.status === 'offline' || !userActivity()[userName]
-                  }"
-                  [title]="userActivity()[userName]?.status || 'offline'">
-                </span>
-                <span class="status-text">{{ userActivity()[userName]?.status || 'offline' }}</span>
-              </div>
-              <div class="point-value">
-                <span *ngIf="showValues()" class="vote-value">{{pointValues()[userName]}}</span>
-                <div *ngIf="!showValues()" class="vote-status">
-                  <fa-icon
-                    [icon]="pointValues()[userName] ? faCheckCircle : faCircle"
-                    [ngClass]="{
-                      'has-voted': pointValues()[userName],
-                      'no-vote': !pointValues()[userName]
-                    }">
-                  </fa-icon>
-                  <span>{{ pointValues()[userName] ? 'Voted' : 'Not voted' }}</span>
-                </div>
-              </div>
-            </div>
-          </ng-container>
-        </div>
-      </mat-card-content>
-
-      <mat-card-footer class="card-footer">
-        <div class="help-text">
-          <fa-icon [icon]="faQuestionCircle"></fa-icon>
-          <span>If you experience issues, refresh the browser or <a href="https://github.com/charlesabarnes/pointing-poker" target="_blank">report it on GitHub</a></span>
-        </div>
-      </mat-card-footer>
-    </mat-card>
-
-    <mat-card class="chat-card">
-      <mat-card-header>
-        <mat-card-title><fa-icon [icon]="faComments"></fa-icon> Team Chat</mat-card-title>
-      </mat-card-header>
-
-      <mat-card-content>
-        <div class="chat">
-          <div #scroller class="chat-box">
-            <div *ngFor="let chat of chatLog()"
-                 [ngClass]="{
-                   'chat-row': chat.type === 'chat',
-                   'system-message': chat.type === 'join'
-                 }">
-              <ng-container *ngIf="chat.type === 'chat'">
-                <span class="name">{{ chat.sender }}</span>
-                <span class="text">{{ chat.content }}</span>
-                <span class="timestamp" title="{{chat.timestamp | date:'medium'}}">{{ chat.timestamp | date:'shortTime' }}</span>
-              </ng-container>
-              <ng-container *ngIf="chat.type === 'join'">
-                <fa-icon [icon]="faUserPlus"></fa-icon>
-                <span class="system-text">{{ chat.sender }} {{ chat.content }}</span>
-              </ng-container>
-            </div>
-          </div>
-
-          <div class="chat-input">
-            <form [formGroup]="chatForm" *ngIf="chatForm" (ngSubmit)="sendChat()" autocomplete="off">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Send Message</mat-label>
-                <input matInput formControlName="message" placeholder="Send Message">
-              </mat-form-field>
-            </form>
-            <button mat-raised-button color="primary" (click)="sendChat()" [disabled]="!chatForm.valid" class="send-button">
-              <fa-icon [icon]="faPaperPlane"></fa-icon>
-              Send
-            </button>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
+    <app-participants-list [currentUserName]="name"></app-participants-list>
+    <app-chat-panel></app-chat-panel>
   </div>
 </div>

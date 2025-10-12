@@ -1,0 +1,40 @@
+.point-value-container {
+  margin-bottom: 1.5rem;
+}
+
+.point-value-container h3 {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+mat-button-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.spectator-container {
+  margin-top: 2rem;
+}
+
+.spectator-toggle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.spectator-toggle span {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.spectator-toggle span.active {
+  color: #fff;
+  font-weight: 600;
+}

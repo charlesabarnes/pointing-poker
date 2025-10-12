@@ -1,0 +1,25 @@
+<div *ngIf="!stateService.isSpectator()" class="point-value-container">
+  <h3><fa-icon [icon]="faFlag"></fa-icon> Select Point Value</h3>
+  <mat-button-toggle-group
+    [ngModel]="stateService.selectedPointValue()"
+    (ngModelChange)="onPointValueChange($event)">
+    <mat-button-toggle
+      *ngFor="let option of options"
+      [value]="option.value"
+      [disabled]="option.disabled">
+      {{option.label}}
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+</div>
+
+<div class="point-value-container spectator-container">
+  <h3><fa-icon [icon]="faEye"></fa-icon> Participant Mode</h3>
+  <div class="spectator-toggle">
+    <span [ngClass]="{'active': !stateService.isSpectator()}">Voter</span>
+    <mat-slide-toggle
+      [ngModel]="stateService.isSpectator()"
+      (ngModelChange)="onSpectatorToggle($event)">
+    </mat-slide-toggle>
+    <span [ngClass]="{'active': stateService.isSpectator()}">Spectator</span>
+  </div>
+</div>

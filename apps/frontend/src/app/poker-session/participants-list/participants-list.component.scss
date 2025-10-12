@@ -1,0 +1,156 @@
+.participants-card {
+  background: linear-gradient(135deg, #2F384F 0%, #1e2433 100%);
+  margin-bottom: 1.5rem;
+}
+
+mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+}
+
+.user-joined-notification {
+  background: rgba(140, 193, 82, 0.2);
+  border-left: 4px solid #8CC152;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #8CC152;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.point-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.user-info {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  align-items: center;
+}
+
+.user-info-header {
+  background: rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+}
+
+.user-info-header h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+}
+
+.current-user {
+  background: rgba(74, 137, 220, 0.2);
+  border-left: 3px solid #4A89DC;
+}
+
+.player-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.status-online {
+  background: #8CC152;
+  box-shadow: 0 0 10px rgba(140, 193, 82, 0.5);
+}
+
+.status-dot.status-away {
+  background: #F6B042;
+}
+
+.status-dot.status-offline {
+  background: #666;
+}
+
+.status-text {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: capitalize;
+}
+
+.point-value {
+  display: flex;
+  justify-content: center;
+}
+
+.vote-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #8CC152;
+}
+
+.vote-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.vote-status fa-icon.has-voted {
+  color: #8CC152;
+}
+
+.vote-status fa-icon.no-vote {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.card-footer {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.help-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.help-text a {
+  color: #4A89DC;
+  text-decoration: none;
+}
+
+.help-text a:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,40 @@
+<mat-card class="chat-card">
+  <mat-card-header>
+    <mat-card-title><fa-icon [icon]="faComments"></fa-icon> Team Chat</mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="chat">
+      <div #scroller class="chat-box">
+        <div *ngFor="let chat of wsService.chatLog()"
+             [ngClass]="{
+               'chat-row': chat.type === 'chat',
+               'system-message': chat.type === 'join'
+             }">
+          <ng-container *ngIf="chat.type === 'chat'">
+            <span class="name">{{ chat.sender }}</span>
+            <span class="text">{{ chat.content }}</span>
+            <span class="timestamp" title="{{chat.timestamp | date:'medium'}}">{{ chat.timestamp | date:'shortTime' }}</span>
+          </ng-container>
+          <ng-container *ngIf="chat.type === 'join'">
+            <fa-icon [icon]="faUserPlus"></fa-icon>
+            <span class="system-text">{{ chat.sender }} {{ chat.content }}</span>
+          </ng-container>
+        </div>
+      </div>
+
+      <div class="chat-input">
+        <form [formGroup]="chatForm" *ngIf="chatForm" (ngSubmit)="sendChat()" autocomplete="off">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Send Message</mat-label>
+            <input matInput formControlName="message" placeholder="Send Message">
+          </mat-form-field>
+        </form>
+        <button mat-raised-button color="primary" (click)="sendChat()" [disabled]="!chatForm.valid" class="send-button">
+          <fa-icon [icon]="faPaperPlane"></fa-icon>
+          Send
+        </button>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

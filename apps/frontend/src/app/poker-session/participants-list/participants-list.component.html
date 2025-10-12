@@ -1,0 +1,67 @@
+<mat-card class="participants-card">
+  <mat-card-header>
+    <mat-card-title><fa-icon [icon]="faUser"></fa-icon> Participants</mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <!-- User join notification -->
+    <div *ngIf="wsService.newUserJoined()" class="user-joined-notification">
+      <fa-icon [icon]="faUserPlus"></fa-icon>
+      <span>{{ wsService.recentJoinedUser() }} has joined the session</span>
+    </div>
+
+    <div class="point-list">
+      <div class="user-info user-info-header">
+        <div class="player-name">
+          <h3>Player</h3>
+        </div>
+        <div class="status-indicator">
+          <h3>Status</h3>
+        </div>
+        <div class="point-value">
+          <h3>Points</h3>
+        </div>
+      </div>
+      <ng-container *ngFor="let userName of stateService.userNames()">
+        <div class="user-info" *ngIf="wsService.pointValues()[userName] !== 'disconnect'"
+             [ngClass]="{'current-user': userName == currentUserName}">
+          <div class="player-name">
+            <span>{{userName}}</span>
+            <fa-icon *ngIf="userName == currentUserName" [icon]="faUserCircle" title="You"></fa-icon>
+          </div>
+          <div class="status-indicator">
+            <span class="status-dot"
+              [ngClass]="{
+                'status-online': wsService.userActivity()[userName]?.status === 'online',
+                'status-away': wsService.userActivity()[userName]?.status === 'away',
+                'status-offline': wsService.userActivity()[userName]?.status === 'offline' || !wsService.userActivity()[userName]
+              }"
+              [title]="wsService.userActivity()[userName]?.status || 'offline'">
+            </span>
+            <span class="status-text">{{ wsService.userActivity()[userName]?.status || 'offline' }}</span>
+          </div>
+          <div class="point-value">
+            <span *ngIf="stateService.showValues()" class="vote-value">{{wsService.pointValues()[userName]}}</span>
+            <div *ngIf="!stateService.showValues()" class="vote-status">
+              <fa-icon
+                [icon]="wsService.pointValues()[userName] ? faCheckCircle : faCircle"
+                [ngClass]="{
+                  'has-voted': wsService.pointValues()[userName],
+                  'no-vote': !wsService.pointValues()[userName]
+                }">
+              </fa-icon>
+              <span>{{ wsService.pointValues()[userName] ? 'Voted' : 'Not voted' }}</span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </mat-card-content>
+
+  <mat-card-footer class="card-footer">
+    <div class="help-text">
+      <fa-icon [icon]="faQuestionCircle"></fa-icon>
+      <span>If you experience issues, refresh the browser or <a href="https://github.com/charlesabarnes/pointing-poker" target="_blank">report it on GitHub</a></span>
+    </div>
+  </mat-card-footer>
+</mat-card>

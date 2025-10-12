@@ -1,0 +1,20 @@
+<div class="story-section">
+  <h3><fa-icon [icon]="faStickyNote"></fa-icon> Story Description</h3>
+  <form [formGroup]="form" *ngIf="form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Story Description</mat-label>
+      <input matInput formControlName="storyDescription" placeholder="Story Description">
+    </mat-form-field>
+  </form>
+</div>
+
+<div class="action-buttons">
+  <button mat-raised-button color="warn" (click)="onClearVotes()">
+    <fa-icon [icon]="faTimes"></fa-icon>
+    Clear Votes
+  </button>
+  <button mat-raised-button color="primary" (click)="onShowVotes()">
+    <fa-icon [icon]="faEye"></fa-icon>
+    Show Votes
+  </button>
+</div>
