@@ -34,20 +34,22 @@ export class ResultsChartComponent {
 
   public chartOptions: ChartOptions = {
     responsive: true,
+    maintainAspectRatio: true,
+    aspectRatio: 1,
     plugins: {
       legend: {
         position: 'top',
         labels: {
-          color: '#fff',
+          color: '#212121',
           font: {
-            size: 16
+            size: 14
           }
         }
       },
       datalabels: {
         color: '#fff',
         font: {
-          size: 20,
+          size: 18,
         },
         formatter: (_value, ctx) => {
           const label = ctx.chart.data.labels[ctx.dataIndex];

@@ -13,12 +13,13 @@
 }
 
 .point-selection-grid {
+  justify-content: center;
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-lg;
 
   app-point-selection-button {
-    flex: 0 0 auto;
+    flex: 0 0 120px; // Fixed width for consistency while maintaining natural flow
   }
 }
 

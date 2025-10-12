@@ -3,9 +3,14 @@
 
 .chart-container {
   @include full-width;
-  height: 100%;
   @include flex-center;
-  min-height: 300px;
+  min-height: 400px;
+  max-height: 400px;
+
+  canvas {
+    max-width: 350px;
+    max-height: 350px;
+  }
 }
 
 .waiting-for-votes {
