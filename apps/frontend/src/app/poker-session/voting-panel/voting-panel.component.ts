@@ -1,12 +1,12 @@
 import { Component, Input, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faFlag, faEye } from '@fortawesome/pro-solid-svg-icons';
 import { PointOption } from 'shared';
 import { PokerSessionStateService } from '../../services/poker-session-state.service';
+import { PointSelectionButtonComponent } from './point-selection-button/point-selection-button.component';
 
 @Component({
   selector: 'app-voting-panel',
@@ -14,9 +14,9 @@ import { PokerSessionStateService } from '../../services/poker-session-state.ser
   imports: [
     CommonModule,
     FormsModule,
-    MatButtonToggleModule,
     MatSlideToggleModule,
-    FontAwesomeModule
+    FontAwesomeModule,
+    PointSelectionButtonComponent
   ],
   templateUrl: './voting-panel.component.html',
   styleUrls: ['./voting-panel.component.scss']

@@ -3,21 +3,14 @@
     <fa-icon [icon]="faFlag" aria-hidden="true"></fa-icon>
     Select Point Value
   </h3>
-  <mat-button-toggle-group
-    [ngModel]="stateService.selectedPointValue()"
-    (ngModelChange)="onPointValueChange($event)"
-    role="group"
-    aria-labelledby="voting-label"
-    [attr.aria-label]="'Point value: ' + (stateService.selectedPointValue() || 'none selected')">
-    <mat-button-toggle
+  <div class="point-selection-grid" role="group" aria-labelledby="voting-label">
+    <app-point-selection-button
       *ngFor="let option of options"
-      [value]="option.value"
-      [disabled]="option.disabled"
-      [attr.aria-label]="option.label + ' points'"
-      [attr.aria-pressed]="stateService.selectedPointValue() === option.value">
-      {{option.label}}
-    </mat-button-toggle>
-  </mat-button-toggle-group>
+      [option]="option"
+      [isSelected]="stateService.selectedPointValue() === option.value"
+      (selected)="onPointValueChange($event)">
+    </app-point-selection-button>
+  </div>
 </div>
 
 <div class="point-value-container spectator-container">

@@ -14,20 +14,20 @@ $color-warning: #F6B042;
 $color-danger: #E9573F;
 
 // Background Colors
-$color-bg-dark: #1e2433;
-$color-bg-darker: #2F384F;
-$color-bg-card: #3D464D;
+$color-bg-light: #f5f5f5;
+$color-bg-lighter: #ffffff;
+$color-bg-card: #ffffff;
 
 // Text Colors
-$color-text-primary: #FFFFFF;
-$color-text-secondary: rgba(255, 255, 255, 0.8);
-$color-text-tertiary: rgba(255, 255, 255, 0.6);
-$color-text-disabled: rgba(255, 255, 255, 0.3);
+$color-text-primary: #212121;
+$color-text-secondary: rgba(0, 0, 0, 0.87);
+$color-text-tertiary: rgba(0, 0, 0, 0.6);
+$color-text-disabled: rgba(0, 0, 0, 0.38);
 
 // Overlay Colors
-$color-overlay-light: rgba(255, 255, 255, 0.05);
-$color-overlay-medium: rgba(0, 0, 0, 0.2);
-$color-overlay-dark: rgba(0, 0, 0, 0.3);
+$color-overlay-light: rgba(0, 0, 0, 0.04);
+$color-overlay-medium: rgba(0, 0, 0, 0.08);
+$color-overlay-dark: rgba(0, 0, 0, 0.12);
 
 // Status Colors
 $color-status-online: #8CC152;
@@ -84,10 +84,10 @@ $border-width-xl: 4px;
 // SHADOWS
 // ============================================================================
 
-$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
-$shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.3);
-$shadow-glow-success: 0 0 10px rgba(140, 193, 82, 0.5);
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+$shadow-md: 0 3px 6px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.12), 0 3px 6px rgba(0, 0, 0, 0.08);
+$shadow-glow-success: 0 0 0 3px rgba(140, 193, 82, 0.2);
 
 // ============================================================================
 // TRANSITIONS

@@ -8,11 +8,12 @@
 // Include the common styles for Angular Material
 @include mat.core();
 
-// Define a dark theme for the app
+// Define a light theme for the app with custom primary color
 $custom-theme: mat.define-theme((
   color: (
-    theme-type: dark,
-    primary: mat.$violet-palette,
+    theme-type: light,
+    primary: mat.$azure-palette,
+    tertiary: mat.$green-palette,
   ),
 ));
 
@@ -26,7 +27,7 @@ $custom-theme: mat.define-theme((
 body {
   margin: 0;
   font-family: $font-family-base;
-  background: $color-bg-dark;
+  background: $color-bg-light;
   color: $color-text-primary;
   min-height: 100vh;
 }
@@ -46,10 +47,15 @@ body {
 .mat-mdc-card {
   background-color: $color-bg-card;
   color: $color-text-primary;
+  border: 1px solid $color-overlay-medium;
 }
 
 .mat-mdc-form-field input {
   color: $color-text-primary;
+}
+
+.mat-mdc-form-field label {
+  color: $color-text-tertiary;
 }
 
 // ============================================================================
@@ -71,19 +77,6 @@ body {
 // ============================================================================
 // COMPONENT STYLES
 // ============================================================================
-
-// Material button toggle group
-mat-button-toggle-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-sm;
-
-  mat-button-toggle {
-    &:focus-visible {
-      @include focus-outline;
-    }
-  }
-}
 
 // FontAwesome icon alignment
 fa-icon {

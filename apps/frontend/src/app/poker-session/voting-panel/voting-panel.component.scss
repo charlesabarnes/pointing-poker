@@ -12,10 +12,14 @@
   gap: $spacing-sm;
 }
 
-mat-button-toggle-group {
+.point-selection-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-sm;
+  gap: $spacing-lg;
+
+  app-point-selection-button {
+    flex: 0 0 auto;
+  }
 }
 
 .spectator-container {
