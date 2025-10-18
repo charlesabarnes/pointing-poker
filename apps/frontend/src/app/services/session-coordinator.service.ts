@@ -80,10 +80,10 @@ export class SessionCoordinatorService implements MessageSender, OnDestroy {
   private handleConnectionEstablished(): void {
     if (this.wasReconnecting) {
       this.toastService.success('Reconnected to server');
-      console.log('Requesting state sync after reconnection');
-      this.send('', MESSAGE_TYPES.REQUEST_STATE);
       this.wasReconnecting = false;
     }
+
+    this.send('', MESSAGE_TYPES.REQUEST_STATE);
 
     this.presenceService.startHeartbeat(() => {
       this.send('', MESSAGE_TYPES.HEARTBEAT);

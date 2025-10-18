@@ -143,8 +143,8 @@ export class SessionStateService {
       const state: SessionState = JSON.parse(message.content as string);
 
       const newPointValues: PointValues = {};
-      Object.keys(state.votes).forEach(fingerprint => {
-        newPointValues[fingerprint] = state.votes[fingerprint];
+      state.participants.forEach(p => {
+        newPointValues[p.fingerprint] = state.votes[p.fingerprint];
       });
       this.pointValues.set(newPointValues);
 
@@ -304,8 +304,15 @@ export class SessionStateService {
   }
 
   private handleClearVotes(): void {
+    const points = this.pointValues();
+    Object.keys(points).forEach(fingerprint => {
+      points[fingerprint] = undefined;
+    });
+    this.pointValues.set({ ...points });
+
     this.votesRevealed.set(false);
     this.confettiShot.set(false);
+    this.resetSelectedValue();
   }
 
   private checkAndTriggerConfetti(): void {
