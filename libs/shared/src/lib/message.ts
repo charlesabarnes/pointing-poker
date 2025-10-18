@@ -9,6 +9,7 @@ export const MESSAGE_TYPES: Record<string, MessageType> = {
   JOIN: 'join',
   STATUS_AFK: 'status_afk',
   STATUS_ONLINE: 'status_online',
+  STATUS_OFFLINE: 'status_offline',
   USER_LEFT: 'user_left',
   NAME_CHANGED: 'name_changed',
   SHOW_VOTES: 'show_votes',
@@ -27,6 +28,7 @@ export type MessageType =
   | 'join'
   | 'status_afk'
   | 'status_online'
+  | 'status_offline'
   | 'user_left'
   | 'name_changed'
   | 'show_votes'

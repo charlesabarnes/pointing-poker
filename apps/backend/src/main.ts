@@ -49,6 +49,9 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   extWs.isAlive = true;
   extWs.session = url.replace('/?session=', '');
   extWs.lastActivity = Date.now();
+  extWs.missedHeartbeats = 0;
+  extWs.lastHeartbeat = Date.now();
+  extWs.offlineSince = undefined;
 
   // Update session activity
   sessionManager.updateSessionActivity(extWs.session);
@@ -139,6 +142,55 @@ setInterval(() => {
       );
 
       logger.logDisconnect(extWs.session, extWs.name, 'timeout');
+      return ws.terminate();
+    }
+
+    // Check for missed heartbeats
+    const timeSinceLastHeartbeat = now - extWs.lastHeartbeat;
+    const heartbeatThreshold = config.heartbeatInterval * 1.5; // Allow 1.5x tolerance
+
+    if (timeSinceLastHeartbeat > heartbeatThreshold) {
+      extWs.missedHeartbeats++;
+
+      // Mark user as offline after threshold reached
+      if (extWs.missedHeartbeats >= config.missedHeartbeatThreshold && !extWs.offlineSince) {
+        extWs.offlineSince = now;
+
+        // Broadcast offline status (keep user in session, just update status)
+        if (extWs.session && extWs.fingerprint) {
+          broadcastToSession(
+            wss,
+            extWs.session,
+            extWs.name || 'Unknown',
+            '',
+            MESSAGE_TYPES.STATUS_OFFLINE,
+            extWs.fingerprint,
+            ws
+          );
+
+          logger.info(`User marked offline due to missed heartbeats`, {
+            session: extWs.session,
+            name: extWs.name,
+            fingerprint: extWs.fingerprint,
+            missedHeartbeats: extWs.missedHeartbeats
+          });
+        }
+      }
+    }
+
+    // Check if offline user should be removed (after 5 minutes)
+    if (extWs.offlineSince && now - extWs.offlineSince > config.offlineRemovalTimeout) {
+      broadcastToSession(
+        wss,
+        extWs.session,
+        extWs.name || 'Unknown',
+        SPECIAL_CONTENT.DISCONNECT,
+        MESSAGE_TYPES.DISCONNECT,
+        extWs.fingerprint,
+        ws
+      );
+
+      logger.logDisconnect(extWs.session, extWs.name, 'offline timeout');
       return ws.terminate();
     }
 

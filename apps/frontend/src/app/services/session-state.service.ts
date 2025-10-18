@@ -114,6 +114,9 @@ export class SessionStateService {
       case MESSAGE_TYPES.STATUS_ONLINE:
         this.updateUserStatus(userKey, 'online', message.timestamp);
         break;
+      case MESSAGE_TYPES.STATUS_OFFLINE:
+        this.updateUserStatus(userKey, 'offline', message.timestamp);
+        break;
       case MESSAGE_TYPES.JOIN:
         this.handleJoin(message);
         break;
@@ -214,7 +217,7 @@ export class SessionStateService {
     this.userActivity.set({ ...activity });
   }
 
-  private updateUserStatus(fingerprint: string, status: 'online' | 'afk', timestamp?: number): void {
+  private updateUserStatus(fingerprint: string, status: 'online' | 'afk' | 'offline', timestamp?: number): void {
     const activity = this.userActivity();
     const currentTime = timestamp || Date.now();
 
@@ -251,6 +254,13 @@ export class SessionStateService {
     const points = this.pointValues();
     points[fingerprint] = content;
     this.pointValues.set({ ...points });
+
+    const fingerprints = Object.keys(points);
+    const allVoted = fingerprints.filter((fp: string) => !points[fp]).length === 0;
+
+    if (allVoted && fingerprints.length > 0 && !this.votesRevealed()) {
+      this.checkAndTriggerConfetti();
+    }
 
     if (this.isCurrentUser(fingerprint)) {
       if (content === undefined) {

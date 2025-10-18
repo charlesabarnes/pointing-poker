@@ -12,6 +12,11 @@ export interface ServerConfig {
   connectionCheckInterval: number;
   inactivityTimeout: number;
 
+  // Heartbeat settings
+  heartbeatInterval: number;
+  missedHeartbeatThreshold: number;
+  offlineRemovalTimeout: number;
+
   // Session management
   sessionCleanupInterval: number;
   sessionInactivityThreshold: number;
@@ -39,6 +44,20 @@ export function loadConfig(): ServerConfig {
       process.env.WS_INACTIVITY_TIMEOUT || '3600000',
       10
     ), // 1 hour
+
+    // Heartbeat settings (in milliseconds)
+    heartbeatInterval: parseInt(
+      process.env.HEARTBEAT_INTERVAL || '15000',
+      10
+    ), // 15 seconds (must match frontend)
+    missedHeartbeatThreshold: parseInt(
+      process.env.MISSED_HEARTBEAT_THRESHOLD || '4',
+      10
+    ), // 4 missed heartbeats = ~60 seconds
+    offlineRemovalTimeout: parseInt(
+      process.env.OFFLINE_REMOVAL_TIMEOUT || '300000',
+      10
+    ), // 5 minutes
 
     // Session management (in milliseconds)
     sessionCleanupInterval: parseInt(

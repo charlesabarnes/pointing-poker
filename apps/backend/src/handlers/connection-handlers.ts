@@ -1,5 +1,5 @@
 import * as WebSocket from 'ws';
-import { Message, ExtWebSocket } from 'shared';
+import { Message, ExtWebSocket, MESSAGE_TYPES } from 'shared';
 import { broadcastMessage } from '../utils/broadcast';
 import { SessionManager } from '../session/session-manager';
 
@@ -10,18 +10,38 @@ import { SessionManager } from '../session/session-manager';
 
 /**
  * Handle HEARTBEAT message type
- * Just marks client as active, no broadcast needed
+ * Resets missed heartbeat counter and handles auto-recovery from offline status
  */
 export function handleHeartbeat(
-  _wss: WebSocket.Server,
+  wss: WebSocket.Server,
   _ws: WebSocket,
   extWs: WebSocket & ExtWebSocket,
-  _message: Message,
+  message: Message,
   sessionManager: SessionManager
 ): void {
+  const now = Date.now();
+  const wasOffline = extWs.offlineSince !== undefined;
+
   extWs.isAlive = true;
-  extWs.lastActivity = Date.now();
+  extWs.lastActivity = now;
+  extWs.lastHeartbeat = now;
+  extWs.missedHeartbeats = 0;
+  extWs.offlineSince = undefined;
+
   sessionManager.updateSessionActivity(extWs.session!);
+
+  // If user was offline, broadcast auto-recovery to online status
+  if (wasOffline && extWs.session && extWs.fingerprint) {
+    const recoveryMessage = new Message(
+      extWs.name || 'Unknown',
+      '',
+      MESSAGE_TYPES.STATUS_ONLINE,
+      extWs.session,
+      now,
+      extWs.fingerprint
+    );
+    broadcastMessage(wss, extWs.session, recoveryMessage);
+  }
 }
 
 /**

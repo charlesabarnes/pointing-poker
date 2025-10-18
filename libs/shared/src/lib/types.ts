@@ -20,6 +20,9 @@ export interface ExtWebSocket {
   content?: string | number;
   fingerprint?: string;
   lastActivity?: number;
+  missedHeartbeats: number;
+  lastHeartbeat: number;
+  offlineSince?: number;
 }
 
 /**
