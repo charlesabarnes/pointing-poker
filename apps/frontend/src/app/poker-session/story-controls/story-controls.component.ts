@@ -1,4 +1,5 @@
-import { Component, OnInit, effect } from '@angular/core';
+import { Component, OnInit, effect, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,11 +7,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faStickyNote, faTimes, faEye } from '@fortawesome/pro-solid-svg-icons';
-import { PokerSessionStateService } from '../../services/poker-session-state.service';
+import { SessionStateService } from '../../services/session-state.service';
 
 @Component({
   selector: 'app-story-controls',
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -23,19 +23,18 @@ import { PokerSessionStateService } from '../../services/poker-session-state.ser
   styleUrls: ['./story-controls.component.scss']
 })
 export class StoryControlsComponent implements OnInit {
-  // Icons
   faStickyNote = faStickyNote;
   faTimes = faTimes;
   faEye = faEye;
 
-  // Form
   public form: FormGroup;
+  public stateService = inject(SessionStateService);
+  private destroyRef = inject(DestroyRef);
 
-  constructor(public stateService: PokerSessionStateService) {
-    // Effect to sync description from state service to form
+  constructor() {
     effect(() => {
       const description = this.stateService.description();
-      if (description !== this.form?.value.storyDescription) {
+      if (description !== this.form?.value?.storyDescription) {
         this.form?.setValue({ storyDescription: description }, { emitEvent: false });
       }
     });
@@ -50,8 +49,9 @@ export class StoryControlsComponent implements OnInit {
       storyDescription: new FormControl('')
     });
 
-    // Listen for changes to the story description
-    this.form.get('storyDescription').valueChanges.subscribe(value => {
+    this.form.get('storyDescription').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(value => {
       if (value !== this.stateService.description()) {
         this.stateService.updateDescription(value);
       }

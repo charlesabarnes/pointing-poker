@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 
 export enum ToastType {
@@ -16,7 +16,7 @@ export class ToastNotificationService {
   private readonly errorDuration = 6000;
   private readonly successDuration = 3000;
 
-  constructor(private snackBar: MatSnackBar) {}
+  private snackBar = inject(MatSnackBar);
 
   /**
    * Show a success toast notification

@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
-import { PokerWebSocketService } from '../services/poker-websocket.service';
-import { PokerSessionStateService } from '../services/poker-session-state.service';
+import { SessionCoordinatorService } from '../services/session-coordinator.service';
+import { SessionStateService } from '../services/session-state.service';
 import { StoryControlsComponent } from './story-controls/story-controls.component';
 import { VotingPanelComponent } from './voting-panel/voting-panel.component';
 import { ResultsChartComponent } from './results-chart/results-chart.component';
@@ -15,7 +15,6 @@ import { ToastNotificationService } from '../services/toast-notification.service
     selector: 'app-poker-session',
     templateUrl: './poker-session.component.html',
     styleUrls: ['./poker-session.component.scss'],
-    standalone: true,
     imports: [
       CommonModule,
       MatCardModule,
@@ -27,49 +26,20 @@ import { ToastNotificationService } from '../services/toast-notification.service
     ]
 })
 export class PokerSessionComponent implements OnInit, OnDestroy {
-  // Session data
   public id: string;
   public name: string;
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private wsService: PokerWebSocketService,
-    public stateService: PokerSessionStateService,
-    private toastService: ToastNotificationService
-  ) {
-    // Effect to sync selected value when current user's points change
-    effect(() => {
-      const points = this.wsService.pointValues();
-      const currentUserFingerprint = this.wsService.getCurrentUserFingerprint();
-
-      if (currentUserFingerprint) {
-        const currentUserPoints = points[currentUserFingerprint];
-
-        if (currentUserPoints === undefined) {
-          // Vote was cleared, reset selection
-          this.stateService.resetSelectedValue();
-          if (!this.stateService.showChart()) {
-            this.stateService.resetConfetti();
-          }
-        } else if (
-          typeof currentUserPoints === 'number' &&
-          this.stateService.selectedPointValue() !== currentUserPoints
-        ) {
-          // Vote was restored or updated from server, sync local state
-          this.stateService.selectedPointValue.set(currentUserPoints);
-        }
-      }
-    });
-  }
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private sessionCoordinator = inject(SessionCoordinatorService);
+  public stateService = inject(SessionStateService);
+  private toastService = inject(ToastNotificationService);
 
   public ngOnInit() {
     try {
       this.id = this.route.snapshot.paramMap.get('id');
-      // Try sessionStorage first, fall back to localStorage
       this.name = sessionStorage.getItem('POKER_NAME') || localStorage.getItem('POKER_NAME');
 
-      // Validate session parameters
       if (!this.id) {
         this.toastService.error('Invalid session ID');
         this.router.navigate(['/']);
@@ -77,16 +47,11 @@ export class PokerSessionComponent implements OnInit, OnDestroy {
       }
 
       if (!this.name) {
-        // Name not set yet - user is being prompted by app component
-        // Don't connect to WebSocket until name is provided
         return;
       }
 
-      // Ensure both storages are in sync
       sessionStorage.setItem('POKER_NAME', this.name);
-
-      // Connect to WebSocket
-      this.wsService.connect(this.id, this.name);
+      this.sessionCoordinator.connect(this.id, this.name);
     } catch (error) {
       console.error('Failed to initialize poker session:', error);
       this.toastService.error('Failed to initialize session. Please try again.');
@@ -96,8 +61,7 @@ export class PokerSessionComponent implements OnInit, OnDestroy {
 
   public ngOnDestroy() {
     try {
-      // Disconnect from WebSocket
-      this.wsService.disconnect();
+      this.sessionCoordinator.disconnect();
     } catch (error) {
       console.error('Error during disconnect:', error);
     }

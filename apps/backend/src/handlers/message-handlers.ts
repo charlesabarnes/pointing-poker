@@ -4,6 +4,7 @@ import { SessionManager } from '../session/session-manager';
 import { broadcastMessage } from '../utils/broadcast';
 import { handleHeartbeat, handleUserLeft } from './connection-handlers';
 import { handlePoints, handleShowVotes, handleClearVotes } from './state-handlers';
+import { handleRequestState } from './state-sync-handler';
 
 /**
  * Handler function type
@@ -28,8 +29,10 @@ type MessageHandler = (
  * - SHOW_VOTES: Updates session reveal state
  * - CLEAR_VOTES: Clears session vote state
  *
- * All other messages (CHAT, DESCRIPTION, STATUS_AFK, STATUS_ONLINE, JOIN, NAME_CHANGED, etc.)
+ * All other messages (CHAT, STATUS_AFK, STATUS_ONLINE, JOIN, NAME_CHANGED, etc.)
  * are simply broadcast to synchronize state across clients.
+ *
+ * DESCRIPTION messages are broadcast AND stored in SessionManager for state sync.
  */
 const EXCEPTION_HANDLERS: Partial<Record<string, MessageHandler>> = {
   [MESSAGE_TYPES.HEARTBEAT]: handleHeartbeat,
@@ -37,6 +40,7 @@ const EXCEPTION_HANDLERS: Partial<Record<string, MessageHandler>> = {
   [MESSAGE_TYPES.POINTS]: handlePoints,
   [MESSAGE_TYPES.SHOW_VOTES]: handleShowVotes,
   [MESSAGE_TYPES.CLEAR_VOTES]: handleClearVotes,
+  [MESSAGE_TYPES.REQUEST_STATE]: handleRequestState,
 };
 
 /**
@@ -58,5 +62,10 @@ export function handleMessage(
   } else {
     // Default: broadcast to all clients in session for state synchronization
     broadcastMessage(wss, extWs.session!, message);
+
+    // Track description in SessionManager for state sync
+    if (message.type === MESSAGE_TYPES.DESCRIPTION && typeof message.content === 'string') {
+      sessionManager.setDescription(extWs.session!, message.content);
+    }
   }
 }

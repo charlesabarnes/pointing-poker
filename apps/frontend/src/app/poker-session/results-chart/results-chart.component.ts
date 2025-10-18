@@ -1,16 +1,15 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartOptions, ChartType } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { BaseChartDirective } from 'ng2-charts';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faClock } from '@fortawesome/pro-solid-svg-icons';
-import { PokerSessionStateService } from '../../services/poker-session-state.service';
-import { PokerWebSocketService } from '../../services/poker-websocket.service';
+import { SessionStateService } from '../../services/session-state.service';
+import { aggregateVotes } from '../../utils/vote-aggregator';
 
 @Component({
   selector: 'app-results-chart',
-  standalone: true,
   imports: [
     CommonModule,
     BaseChartDirective,
@@ -20,10 +19,10 @@ import { PokerWebSocketService } from '../../services/poker-websocket.service';
   styleUrls: ['./results-chart.component.scss']
 })
 export class ResultsChartComponent {
-  // Icon
   faClock = faClock;
 
-  // Chart configuration
+  public stateService = inject(SessionStateService);
+
   public chartType: ChartType = 'pie';
   public plugins = [ChartDataLabels];
   public colors = ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0'];
@@ -57,7 +56,6 @@ export class ResultsChartComponent {
     }
   };
 
-  // Computed signals for chart data
   public chartData = computed(() => {
     const pointValueCounts = this.getPointValueCountObject();
     const data: number[] = [];
@@ -80,29 +78,9 @@ export class ResultsChartComponent {
     return data;
   });
 
-  // Computed signal to detect consensus (all votes are the same)
-  public hasConsensus = computed(() => {
-    const pointValueCounts = this.getPointValueCountObject();
-    return Object.keys(pointValueCounts).length === 1 && Object.values(pointValueCounts)[0] > 0;
-  });
-
-  constructor(
-    public stateService: PokerSessionStateService,
-    private wsService: PokerWebSocketService
-  ) {}
-
   private getPointValueCountObject(): Record<string, number> {
-    let pointValueCounts: Record<string, number> = {};
-    let point: number;
-    const values = this.wsService.pointValues();
-    // Note: fingerprint is the key, but we only care about the point value
-    for (const fingerprint in values) {
-      if (values.hasOwnProperty(fingerprint) && values[fingerprint] !== 'disconnect' && values[fingerprint]) {
-        point = values[fingerprint] as number;
-        pointValueCounts[point] = pointValueCounts[point] ? pointValueCounts[point] + 1 : 1;
-      }
-    }
-    return pointValueCounts;
+    const values = this.stateService.pointValues();
+    return aggregateVotes(values);
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -10,12 +10,10 @@ import {
   faCircle,
   faQuestionCircle
 } from '@fortawesome/pro-solid-svg-icons';
-import { PokerWebSocketService } from '../../services/poker-websocket.service';
-import { PokerSessionStateService } from '../../services/poker-session-state.service';
+import { SessionStateService } from '../../services/session-state.service';
 
 @Component({
   selector: 'app-participants-list',
-  standalone: true,
   imports: [
     CommonModule,
     MatCardModule,
@@ -25,7 +23,6 @@ import { PokerSessionStateService } from '../../services/poker-session-state.ser
   styleUrls: ['./participants-list.component.scss']
 })
 export class ParticipantsListComponent {
-  // Icons
   faUser = faUser;
   faUserPlus = faUserPlus;
   faUserCircle = faUserCircle;
@@ -33,11 +30,7 @@ export class ParticipantsListComponent {
   faCircle = faCircle;
   faQuestionCircle = faQuestionCircle;
 
-  // Input
-  @Input() currentUserName: string;
+  currentUserName = input<string>();
 
-  constructor(
-    public wsService: PokerWebSocketService,
-    public stateService: PokerSessionStateService
-  ) {}
+  public stateService = inject(SessionStateService);
 }

@@ -12,6 +12,9 @@ export class SessionManager {
   // Track last activity per session for cleanup
   private sessionLastActivity: Record<string, number> = {};
 
+  // Track description per session
+  private sessionDescriptions: Record<string, string> = {};
+
   /**
    * Store a vote for a user in a session
    */
@@ -44,6 +47,21 @@ export class SessionManager {
     delete this.sessionVotes[sessionId];
     this.sessionVotesRevealed[sessionId] = false;
     this.updateSessionActivity(sessionId);
+  }
+
+  /**
+   * Set description for a session
+   */
+  public setDescription(sessionId: string, description: string): void {
+    this.sessionDescriptions[sessionId] = description;
+    this.updateSessionActivity(sessionId);
+  }
+
+  /**
+   * Get description for a session
+   */
+  public getDescription(sessionId: string): string {
+    return this.sessionDescriptions[sessionId] || '';
   }
 
   /**
@@ -87,7 +105,8 @@ export class SessionManager {
     const allSessionIds = new Set([
       ...Object.keys(this.sessionVotes),
       ...Object.keys(this.sessionVotesRevealed),
-      ...Object.keys(this.sessionLastActivity)
+      ...Object.keys(this.sessionLastActivity),
+      ...Object.keys(this.sessionDescriptions)
     ]);
 
     allSessionIds.forEach(sessionId => {
@@ -96,6 +115,7 @@ export class SessionManager {
         delete this.sessionVotes[sessionId];
         delete this.sessionVotesRevealed[sessionId];
         delete this.sessionLastActivity[sessionId];
+        delete this.sessionDescriptions[sessionId];
         cleanedCount++;
       }
     });

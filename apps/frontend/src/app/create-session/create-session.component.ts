@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -12,7 +12,6 @@ import { faInfoCircle, faCheck } from '@fortawesome/pro-solid-svg-icons';
     selector: 'app-create-session',
     templateUrl: './create-session.component.html',
     styleUrls: ['./create-session.component.scss'],
-    standalone: true,
     imports: [
       CommonModule,
       ReactiveFormsModule,
@@ -24,13 +23,12 @@ import { faInfoCircle, faCheck } from '@fortawesome/pro-solid-svg-icons';
     ]
 })
 export class CreateSessionComponent implements OnInit {
-  // FontAwesome icons
   faInfoCircle = faInfoCircle;
   faCheck = faCheck;
 
   public form: FormGroup;
 
-  constructor(public dialogRef: MatDialogRef<CreateSessionComponent>) { }
+  private dialogRef = inject(MatDialogRef<CreateSessionComponent>);
 
   public ngOnInit() {
     this.createForm();

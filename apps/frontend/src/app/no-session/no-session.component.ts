@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -11,15 +11,13 @@ const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
     selector: 'app-no-session',
     templateUrl: './no-session.component.html',
     styleUrls: ['./no-session.component.scss'],
-    standalone: true,
     imports: [MatButtonModule, MatCardModule, FontAwesomeModule]
 })
 export class NoSessionComponent {
-  // FontAwesome icons
   faCheck = faCheck;
   faPlus = faPlus;
 
-  constructor(public router: Router) { }
+  private router = inject(Router);
 
   public createSession(): void {
     setTimeout( () => { this.router.navigate([`/session/${this.generateSessionId(30)}`]); }, 500);

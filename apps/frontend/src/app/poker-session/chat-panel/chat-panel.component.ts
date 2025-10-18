@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, ElementRef, AfterViewChecked, inject, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -7,12 +7,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faComments, faPaperPlane, faUserPlus } from '@fortawesome/pro-solid-svg-icons';
-import { PokerWebSocketService } from '../../services/poker-websocket.service';
+import { SessionCoordinatorService } from '../../services/session-coordinator.service';
+import { SessionStateService } from '../../services/session-state.service';
 import { ToastNotificationService } from '../../services/toast-notification.service';
 
 @Component({
   selector: 'app-chat-panel',
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -26,21 +26,16 @@ import { ToastNotificationService } from '../../services/toast-notification.serv
   styleUrls: ['./chat-panel.component.scss']
 })
 export class ChatPanelComponent implements OnInit, AfterViewChecked {
-  // Icons
   faComments = faComments;
   faPaperPlane = faPaperPlane;
   faUserPlus = faUserPlus;
 
-  // Form
   public chatForm: FormGroup;
+  private sessionCoordinator = inject(SessionCoordinatorService);
+  public stateService = inject(SessionStateService);
+  private toastService = inject(ToastNotificationService);
 
-  // ViewChild for auto-scroll
-  @ViewChild('scroller', { static: false }) private scroller: ElementRef;
-
-  constructor(
-    public wsService: PokerWebSocketService,
-    private toastService: ToastNotificationService
-  ) {}
+  private scroller = viewChild<ElementRef>('scroller');
 
   ngOnInit(): void {
     this.createChatForm();
@@ -64,7 +59,7 @@ export class ChatPanelComponent implements OnInit, AfterViewChecked {
     try {
       const message = this.chatForm.value.message;
       if (message && message.trim()) {
-        this.wsService.send(message, 'chat');
+        this.sessionCoordinator.send(message, 'chat');
         this.chatForm.setValue({ message: '' });
         this.scrollToBottom();
       }
@@ -75,11 +70,13 @@ export class ChatPanelComponent implements OnInit, AfterViewChecked {
   }
 
   private scrollToBottom(): void {
-    try {
-      this.scroller.nativeElement.scrollTop = this.scroller.nativeElement.scrollHeight;
-    } catch (err) {
-      // Silently fail - this is non-critical for UX
-      console.warn('Failed to scroll chat to bottom:', err);
+    const scrollerEl = this.scroller();
+    if (scrollerEl?.nativeElement) {
+      try {
+        scrollerEl.nativeElement.scrollTop = scrollerEl.nativeElement.scrollHeight;
+      } catch (err) {
+        console.warn('Failed to scroll chat to bottom:', err);
+      }
     }
   }
 }

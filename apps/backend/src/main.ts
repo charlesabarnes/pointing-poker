@@ -9,6 +9,7 @@ import { loadConfig, validateConfig } from './config/environment';
 import { logger } from './utils/logger';
 import { handleMessage } from './handlers/message-handlers';
 import { handleNameChange } from './utils/name-change';
+import { sendFullState } from './handlers/state-sync-handler';
 
 // Load and validate configuration
 const config = loadConfig();
@@ -55,26 +56,12 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
   // Log connection
   logger.logConnection(extWs.session);
 
-  // Send existing point values to new connection
-  // Exclude clients without fingerprints (not yet identified)
-  const sessionClients = getSessionClients(wss, extWs.session);
-  sessionClients.forEach((client) => {
-    // Only send state for clients that have been properly identified
-    if (client.fingerprint) {
-      sendToClient(
-        ws,
-        client.name || 'Unknown',
-        client.content,
-        MESSAGE_TYPES.POINTS,
-        client.fingerprint
-      );
-    }
-  });
-
-  // Send revealed state to new connection if votes are already shown
-  if (sessionManager.areVotesRevealed(extWs.session)) {
-    sendToClient(ws, 'server', 'votes_revealed', MESSAGE_TYPES.SHOW_VOTES);
-  }
+  // Send complete session state to new connection
+  // This includes: votes, reveal status, description, and participants
+  // Timeout allows the client to identify itself first
+  setTimeout(() => {
+    sendFullState(wss, ws, extWs.session, sessionManager);
+  }, 100);
 
   // Handle pong response
   ws.on('pong', () => {

@@ -1,16 +1,15 @@
-import { Component, Input, Signal } from '@angular/core';
+import { Component, Input, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faFlag, faEye } from '@fortawesome/pro-solid-svg-icons';
 import { PointOption } from 'shared';
-import { PokerSessionStateService } from '../../services/poker-session-state.service';
+import { SessionStateService } from '../../services/session-state.service';
 import { PointSelectionButtonComponent } from './point-selection-button/point-selection-button.component';
 
 @Component({
   selector: 'app-voting-panel',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -22,11 +21,11 @@ import { PointSelectionButtonComponent } from './point-selection-button/point-se
   styleUrls: ['./voting-panel.component.scss']
 })
 export class VotingPanelComponent {
-  // Icons
   faFlag = faFlag;
   faEye = faEye;
 
-  // Point options
+  public stateService = inject(SessionStateService);
+
   public options: PointOption[] = [
     { label: '.5', value: .5 },
     { label: '1', value: 1 },
@@ -38,8 +37,6 @@ export class VotingPanelComponent {
     { label: '21', value: 21 },
     { label: '0', value: 0, disabled: true },
   ];
-
-  constructor(public stateService: PokerSessionStateService) {}
 
   public onPointValueChange(value: number): void {
     this.stateService.selectPointValue(value);

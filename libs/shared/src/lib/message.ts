@@ -13,6 +13,8 @@ export const MESSAGE_TYPES: Record<string, MessageType> = {
   NAME_CHANGED: 'name_changed',
   SHOW_VOTES: 'show_votes',
   CLEAR_VOTES: 'clear_votes',
+  REQUEST_STATE: 'request_state',
+  STATE_SYNC: 'state_sync',
 } as const;
 
 export type MessageType =
@@ -28,7 +30,9 @@ export type MessageType =
   | 'user_left'
   | 'name_changed'
   | 'show_votes'
-  | 'clear_votes';
+  | 'clear_votes'
+  | 'request_state'
+  | 'state_sync';
 
 export class Message {
   public content: string | number | undefined;

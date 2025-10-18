@@ -1,17 +1,12 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCircle, faSpinner } from '@fortawesome/pro-solid-svg-icons';
-import { PokerWebSocketService, ConnectionState } from '../../services/poker-websocket.service';
+import { WebSocketConnectionService, ConnectionState } from '../../services/websocket-connection.service';
 
-/**
- * Connection Status Indicator Component
- * Displays the current WebSocket connection state
- */
 @Component({
   selector: 'app-connection-status',
-  standalone: true,
   imports: [CommonModule, MatTooltipModule, FontAwesomeModule],
   template: `
     <div class="connection-status" [matTooltip]="tooltipText()" matTooltipPosition="below">
@@ -67,12 +62,10 @@ export class ConnectionStatusComponent {
   faCircle = faCircle;
   faSpinner = faSpinner;
 
-  constructor(private wsService: PokerWebSocketService) {}
+  private wsConnection = inject(WebSocketConnectionService);
 
-  // Get connection state from service
-  connectionState = computed(() => this.wsService.connectionState());
+  connectionState = computed(() => this.wsConnection.connectionState());
 
-  // Computed status text
   statusText = computed(() => {
     switch (this.connectionState()) {
       case ConnectionState.CONNECTED:
@@ -90,7 +83,6 @@ export class ConnectionStatusComponent {
     }
   });
 
-  // Computed tooltip text
   tooltipText = computed(() => {
     switch (this.connectionState()) {
       case ConnectionState.CONNECTED:
@@ -108,7 +100,6 @@ export class ConnectionStatusComponent {
     }
   });
 
-  // Computed CSS class
   statusClass = computed(() => {
     switch (this.connectionState()) {
       case ConnectionState.CONNECTED:

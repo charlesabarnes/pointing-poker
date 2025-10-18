@@ -50,3 +50,17 @@ export interface PointOption {
   value: number;
   disabled?: boolean;
 }
+
+/**
+ * Session state snapshot for synchronization
+ * Used in STATE_SYNC messages to send complete session state to clients
+ */
+export interface SessionState {
+  votes: Record<string, string | number | undefined>; // fingerprint -> vote
+  votesRevealed: boolean;
+  description: string;
+  participants: {
+    fingerprint: string;
+    name: string;
+  }[];
+}

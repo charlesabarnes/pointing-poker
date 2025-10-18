@@ -1,5 +1,5 @@
 import * as WebSocket from 'ws';
-import { Message, ExtWebSocket, SPECIAL_CONTENT } from 'shared';
+import { Message, ExtWebSocket, SPECIAL_CONTENT, MESSAGE_TYPES } from 'shared';
 import { broadcastToSession, broadcastMessage, getSessionClients } from '../utils/broadcast';
 import { SessionManager } from '../session/session-manager';
 
@@ -39,7 +39,8 @@ export function handlePoints(
     );
   } else if (message.content === undefined) {
     // Check if this is a reconnection with a stored vote
-    if (message.fingerprint && !sessionManager.areVotesRevealed(extWs.session!)) {
+    // Now restores votes regardless of reveal status for better state consistency
+    if (message.fingerprint) {
       const restoredVote = sessionManager.getVote(extWs.session!, message.fingerprint);
       if (restoredVote !== undefined) {
         // Restore their previous vote
@@ -111,9 +112,10 @@ function handleLegacyClearVotes(
   extWs: WebSocket & ExtWebSocket,
   sessionManager: SessionManager
 ): void {
+  // Clear server-side state
   sessionManager.clearVotes(extWs.session!);
 
-  // Clear content for all connected clients and broadcast
+  // Clear content for all connected clients in single pass
   const sessionClients = getSessionClients(wss, extWs.session!);
   sessionClients.forEach((client) => {
     if (client.content !== SPECIAL_CONTENT.DISCONNECT) {
@@ -121,15 +123,17 @@ function handleLegacyClearVotes(
     }
   });
 
-  // Broadcast cleared state to all clients
-  sessionClients.forEach((client) => {
-    broadcastToSession(
-      wss,
-      extWs.session!,
-      client.name || 'Unknown',
-      undefined,
-      'points',
-      client.fingerprint
-    );
-  });
+  // Send single CLEAR_VOTES message to all clients
+  // This is more efficient and atomic than individual broadcasts
+  broadcastMessage(
+    wss,
+    extWs.session!,
+    new Message(
+      'server',
+      '',
+      MESSAGE_TYPES.CLEAR_VOTES,
+      extWs.session,
+      Date.now()
+    )
+  );
 }

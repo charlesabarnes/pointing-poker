@@ -1,5 +1,6 @@
 import * as WebSocket from 'ws';
 import { ExtWebSocket, Message, MessageType } from 'shared';
+import { logger } from './logger';
 
 /**
  * Broadcast a message to all clients in a specific session
@@ -27,7 +28,26 @@ export function broadcastToSession(
   wss.clients.forEach((client: WebSocket) => {
     const extClient = client as unknown as WebSocket & ExtWebSocket;
     if (extClient.session === sessionId && client !== excludeSender) {
-      client.send(message);
+      if (client.readyState === WebSocket.OPEN) {
+        try {
+          client.send(message);
+        } catch (error) {
+          logger.error(
+            'Failed to send message to client',
+            error instanceof Error ? error : new Error(String(error)),
+            {
+              sessionId,
+              clientName: extClient.name
+            }
+          );
+        }
+      } else {
+        logger.debug('Skipping client with non-OPEN readyState', {
+          sessionId,
+          clientName: extClient.name,
+          readyState: client.readyState
+        });
+      }
     }
   });
 }
@@ -50,7 +70,28 @@ export function sendToClient(
   const message = JSON.stringify(
     new Message(sender, content, type, undefined, Date.now(), fingerprint)
   );
-  client.send(message);
+
+  if (client.readyState === WebSocket.OPEN) {
+    try {
+      client.send(message);
+    } catch (error) {
+      const extClient = client as unknown as WebSocket & ExtWebSocket;
+      logger.error(
+        'Failed to send message to specific client',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          clientName: extClient.name,
+          clientSession: extClient.session
+        }
+      );
+    }
+  } else {
+    const extClient = client as unknown as WebSocket & ExtWebSocket;
+    logger.debug('Cannot send to client with non-OPEN readyState', {
+      clientName: extClient.name,
+      readyState: client.readyState
+    });
+  }
 }
 
 /**
@@ -92,7 +133,27 @@ export function broadcastMessage(
   wss.clients.forEach((client: WebSocket) => {
     const extClient = client as unknown as WebSocket & ExtWebSocket;
     if (extClient.session === sessionId && client !== excludeSender) {
-      client.send(messageStr);
+      if (client.readyState === WebSocket.OPEN) {
+        try {
+          client.send(messageStr);
+        } catch (error) {
+          logger.error(
+            'Failed to broadcast message to client',
+            error instanceof Error ? error : new Error(String(error)),
+            {
+              sessionId,
+              clientName: extClient.name,
+              messageType: message.type
+            }
+          );
+        }
+      } else {
+        logger.debug('Skipping client with non-OPEN readyState during broadcast', {
+          sessionId,
+          clientName: extClient.name,
+          readyState: client.readyState
+        });
+      }
     }
   });
 }

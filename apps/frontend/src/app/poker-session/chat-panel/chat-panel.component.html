@@ -16,7 +16,7 @@
            aria-atomic="false"
            aria-labelledby="chat-title"
            aria-label="Chat messages">
-        @for (chat of wsService.chatLog(); track chat.timestamp) {
+        @for (chat of stateService.chatLog(); track chat.timestamp) {
           <div [ngClass]="{
                  'chat-row': chat.type === 'chat',
                  'system-message': chat.type === 'join'

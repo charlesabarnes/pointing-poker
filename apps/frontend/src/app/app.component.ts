@@ -1,4 +1,5 @@
-import { Component, OnInit, computed } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -19,7 +20,6 @@ const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
-    standalone: true,
     imports: [
       MatToolbarModule,
       FontAwesomeModule,
@@ -31,7 +31,6 @@ const CHAR_SET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
     ]
 })
 export class AppComponent implements OnInit {
-  // FontAwesome icons
   faCopy = faCopy;
   faCog = faCog;
 
@@ -39,43 +38,35 @@ export class AppComponent implements OnInit {
   public showConnectionStatus = false;
   private pendingSessionId: string | null = null;
 
-  constructor(
-    public dialog: MatDialog,
-    public router: Router,
-    public snackBar: MatSnackBar
-    ) {
-  }
+  private dialog = inject(MatDialog);
+  private router = inject(Router);
+  private snackBar = inject(MatSnackBar);
+  private destroyRef = inject(DestroyRef);
 
   public ngOnInit(): void {
-    // Try sessionStorage first, fall back to localStorage for persistence
     this.name = sessionStorage.getItem(POKER_NAME) || localStorage.getItem(POKER_NAME);
     if (this.name) {
-      // Ensure both storages are in sync
       sessionStorage.setItem(POKER_NAME, this.name);
     } else {
-      // Check if trying to navigate to a session without a name
-      // Use window.location.pathname to get the actual current URL,
-      // since this.router.url might not be updated yet during ngOnInit
       const currentUrl = window.location.pathname;
       const sessionMatch = currentUrl.match(/\/session\/([^\/\?]+)/);
 
       if (sessionMatch) {
-        // Store the intended session ID but stay on the session page
         this.pendingSessionId = sessionMatch[1];
       }
 
-      // Prompt for name
       this.changeName();
     }
 
-    // Show connection status only on session pages
     this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe((event: NavigationEnd) => {
         this.showConnectionStatus = event.url.includes('/session/');
       });
 
-    // Check initial route
     this.showConnectionStatus = this.router.url.includes('/session/');
   }
 
@@ -95,19 +86,15 @@ export class AppComponent implements OnInit {
     if (name) {
       this.name = name;
       sessionStorage.setItem(POKER_NAME, name);
-      localStorage.setItem(POKER_NAME, name); // Persist across sessions
+      localStorage.setItem(POKER_NAME, name);
 
-      // Check if we have a pending session ID from initial navigation
       if (this.pendingSessionId) {
         const sessionId = this.pendingSessionId;
-        this.pendingSessionId = null; // Clear it
+        this.pendingSessionId = null;
         setTimeout(() => { this.router.navigate([`/session/${sessionId}`]); }, 500);
       } else if (this.router.url === '/') {
-        // Create a new session
         setTimeout(() => { this.router.navigate([`/session/${this.generateSessionId(30)}`]); }, 500);
       } else {
-        // Stay on current session URL and let the component load
-        // Extract the current URL and navigate to it to trigger component initialization
         const currentUrl = this.router.url;
         this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
           this.router.navigateByUrl(currentUrl);
