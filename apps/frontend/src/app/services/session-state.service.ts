@@ -280,7 +280,14 @@ export class SessionStateService {
   private handleJoin(message: Message): void {
     this.chatLog.update(log => [...log, message]);
 
-    if (!this.isCurrentUser(message.fingerprint || '')) {
+    const fingerprint = message.fingerprint || message.sender;
+    const points = this.pointValues();
+    if (!points.hasOwnProperty(fingerprint)) {
+      points[fingerprint] = undefined;
+      this.pointValues.set({ ...points });
+    }
+
+    if (!this.isCurrentUser(fingerprint)) {
       this.newUserJoined.set(true);
       this.recentJoinedUser.set(message.sender);
 
