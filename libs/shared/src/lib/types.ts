@@ -55,6 +55,22 @@ export interface PointOption {
 }
 
 /**
+ * Timer status
+ */
+export type TimerStatus = 'idle' | 'running' | 'paused';
+
+/**
+ * Timer state for synchronized countdown
+ */
+export interface TimerState {
+  duration: number; // Total duration in seconds
+  remainingTime: number; // Remaining time in seconds
+  status: TimerStatus;
+  startedAt?: number; // Timestamp when timer started
+  pausedAt?: number; // Timestamp when timer was paused
+}
+
+/**
  * Session state snapshot for synchronization
  * Used in STATE_SYNC messages to send complete session state to clients
  */
@@ -66,4 +82,5 @@ export interface SessionState {
     fingerprint: string;
     name: string;
   }[];
+  timerState?: TimerState;
 }

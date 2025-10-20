@@ -16,6 +16,12 @@ export const MESSAGE_TYPES: Record<string, MessageType> = {
   CLEAR_VOTES: 'clear_votes',
   REQUEST_STATE: 'request_state',
   STATE_SYNC: 'state_sync',
+  START_TIMER: 'start_timer',
+  PAUSE_TIMER: 'pause_timer',
+  RESUME_TIMER: 'resume_timer',
+  STOP_TIMER: 'stop_timer',
+  EXTEND_TIMER: 'extend_timer',
+  TIMER_TICK: 'timer_tick',
 } as const;
 
 export type MessageType =
@@ -34,7 +40,13 @@ export type MessageType =
   | 'show_votes'
   | 'clear_votes'
   | 'request_state'
-  | 'state_sync';
+  | 'state_sync'
+  | 'start_timer'
+  | 'pause_timer'
+  | 'resume_timer'
+  | 'stop_timer'
+  | 'extend_timer'
+  | 'timer_tick';
 
 export class Message {
   public content: string | number | undefined;

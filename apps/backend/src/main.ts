@@ -10,34 +10,32 @@ import { logger } from './utils/logger';
 import { handleMessage } from './handlers/message-handlers';
 import { handleNameChange } from './utils/name-change';
 import { sendFullState } from './handlers/state-sync-handler';
+import { TimerService } from './utils/timer-service';
+import { setTimerService } from './handlers/timer-handlers';
 
-// Load and validate configuration
 const config = loadConfig();
 validateConfig(config);
 logger.setLevel(config.logLevel);
 
-// Express server
 const app = express();
 const DIST_FOLDER: string = join(process.cwd(), 'dist/apps/frontend/browser');
 
-// Serve static files from /browser
 app.use(
   express.static(DIST_FOLDER, {
     maxAge: '1y',
   })
 );
 
-// All regular routes use the index.html
 app.get('/*path', (_req: express.Request, res: express.Response) => {
   res.sendFile(join(DIST_FOLDER, 'index.html'));
 });
 
-// Initialize WebSocket server
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// Initialize session manager
 const sessionManager = new SessionManager();
+const timerService = new TimerService(wss, sessionManager);
+setTimerService(timerService);
 
 // Handle WebSocket connections
 wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {

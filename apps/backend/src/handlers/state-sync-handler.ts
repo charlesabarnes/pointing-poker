@@ -45,12 +45,12 @@ export function sendFullState(
       name: c.name || 'Unknown'
     }));
 
-  // Build complete state snapshot
   const state: SessionState = {
     votes: sessionManager.getSessionVotes(sessionId),
     votesRevealed: sessionManager.areVotesRevealed(sessionId),
     description: sessionManager.getDescription(sessionId),
-    participants
+    participants,
+    timerState: sessionManager.getTimerState(sessionId)
   };
 
   // Send as STATE_SYNC message with the state object as content

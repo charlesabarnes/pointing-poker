@@ -8,6 +8,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faStickyNote, faTimes, faEye } from '@fortawesome/pro-solid-svg-icons';
 import { SessionStateService } from '../../services/session-state.service';
+import { TimerDisplayComponent } from '../timer-display/timer-display.component';
+import { TimerControlsComponent } from '../timer-controls/timer-controls.component';
 
 @Component({
   selector: 'app-story-controls',
@@ -17,7 +19,9 @@ import { SessionStateService } from '../../services/session-state.service';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    FontAwesomeModule
+    FontAwesomeModule,
+    TimerDisplayComponent,
+    TimerControlsComponent
   ],
   templateUrl: './story-controls.component.html',
   styleUrls: ['./story-controls.component.scss']

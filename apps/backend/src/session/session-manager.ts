@@ -1,3 +1,5 @@
+import { TimerState, TimerStatus } from '@pointing-poker/shared';
+
 /**
  * Manages session state including votes and reveal status
  * This centralizes all session-related state management
@@ -14,6 +16,9 @@ export class SessionManager {
 
   // Track description per session
   private sessionDescriptions: Record<string, string> = {};
+
+  // Track timer state per session
+  private sessionTimers: Record<string, TimerState> = {};
 
   /**
    * Store a vote for a user in a session
@@ -40,12 +45,10 @@ export class SessionManager {
     return this.sessionVotes[sessionId] || {};
   }
 
-  /**
-   * Clear all votes in a session
-   */
   public clearVotes(sessionId: string): void {
     delete this.sessionVotes[sessionId];
     this.sessionVotesRevealed[sessionId] = false;
+    this.stopTimer(sessionId);
     this.updateSessionActivity(sessionId);
   }
 
@@ -62,6 +65,75 @@ export class SessionManager {
    */
   public getDescription(sessionId: string): string {
     return this.sessionDescriptions[sessionId] || '';
+  }
+
+  public startTimer(sessionId: string, duration: number): void {
+    this.sessionTimers[sessionId] = {
+      duration,
+      remainingTime: duration,
+      status: 'running',
+      startedAt: Date.now(),
+    };
+    this.updateSessionActivity(sessionId);
+  }
+
+  public pauseTimer(sessionId: string): void {
+    const timer = this.sessionTimers[sessionId];
+    if (timer && timer.status === 'running') {
+      timer.status = 'paused';
+      timer.pausedAt = Date.now();
+    }
+    this.updateSessionActivity(sessionId);
+  }
+
+  public resumeTimer(sessionId: string): void {
+    const timer = this.sessionTimers[sessionId];
+    if (timer && timer.status === 'paused') {
+      timer.status = 'running';
+      delete timer.pausedAt;
+      timer.startedAt = Date.now();
+    }
+    this.updateSessionActivity(sessionId);
+  }
+
+  public stopTimer(sessionId: string): void {
+    if (this.sessionTimers[sessionId]) {
+      this.sessionTimers[sessionId] = {
+        duration: 0,
+        remainingTime: 0,
+        status: 'idle',
+      };
+    }
+    this.updateSessionActivity(sessionId);
+  }
+
+  public extendTimer(sessionId: string, additionalSeconds: number): void {
+    const timer = this.sessionTimers[sessionId];
+    if (timer) {
+      timer.duration += additionalSeconds;
+      timer.remainingTime += additionalSeconds;
+    }
+    this.updateSessionActivity(sessionId);
+  }
+
+  public getTimerState(sessionId: string): TimerState | undefined {
+    return this.sessionTimers[sessionId];
+  }
+
+  public updateTimerTick(sessionId: string): { remainingTime: number; expired: boolean } {
+    const timer = this.sessionTimers[sessionId];
+    if (!timer || timer.status !== 'running') {
+      return { remainingTime: timer?.remainingTime || 0, expired: false };
+    }
+
+    timer.remainingTime = Math.max(0, timer.remainingTime - 1);
+
+    if (timer.remainingTime === 0) {
+      timer.status = 'idle';
+      return { remainingTime: 0, expired: true };
+    }
+
+    return { remainingTime: timer.remainingTime, expired: false };
   }
 
   /**
@@ -106,7 +178,8 @@ export class SessionManager {
       ...Object.keys(this.sessionVotes),
       ...Object.keys(this.sessionVotesRevealed),
       ...Object.keys(this.sessionLastActivity),
-      ...Object.keys(this.sessionDescriptions)
+      ...Object.keys(this.sessionDescriptions),
+      ...Object.keys(this.sessionTimers)
     ]);
 
     allSessionIds.forEach(sessionId => {
@@ -116,6 +189,7 @@ export class SessionManager {
         delete this.sessionVotesRevealed[sessionId];
         delete this.sessionLastActivity[sessionId];
         delete this.sessionDescriptions[sessionId];
+        delete this.sessionTimers[sessionId];
         cleanedCount++;
       }
     });

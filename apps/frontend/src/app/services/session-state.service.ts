@@ -1,6 +1,6 @@
 import { Injectable, signal, computed, DestroyRef, inject, Injector } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Message, PointValues, UserActivity, MESSAGE_TYPES, SessionState } from 'shared';
+import { Message, PointValues, UserActivity, MESSAGE_TYPES, SessionState, TimerState, TimerStatus } from 'shared';
 import { create } from 'canvas-confetti';
 import { MessageSender } from './message-sender.interface';
 import { aggregateVotes } from '../utils/vote-aggregator';
@@ -27,6 +27,9 @@ export class SessionStateService {
   public isSpectator = signal<boolean>(false);
   public newUserJoined = signal<boolean>(false);
   public recentJoinedUser = signal<string>('');
+  public timerDuration = signal<number>(0);
+  public timerRemainingTime = signal<number>(0);
+  public timerStatus = signal<TimerStatus>('idle');
 
   private currentUserFingerprint: string;
 
@@ -134,6 +137,24 @@ export class SessionStateService {
       case MESSAGE_TYPES.STATE_SYNC:
         this.handleStateSync(message);
         break;
+      case MESSAGE_TYPES.START_TIMER:
+        this.handleStartTimer(message);
+        break;
+      case MESSAGE_TYPES.PAUSE_TIMER:
+        this.handlePauseTimer();
+        break;
+      case MESSAGE_TYPES.RESUME_TIMER:
+        this.handleResumeTimer();
+        break;
+      case MESSAGE_TYPES.STOP_TIMER:
+        this.handleStopTimer();
+        break;
+      case MESSAGE_TYPES.EXTEND_TIMER:
+        this.handleExtendTimer(message);
+        break;
+      case MESSAGE_TYPES.TIMER_TICK:
+        this.handleTimerTick(message);
+        break;
       default:
         break;
     }
@@ -179,11 +200,18 @@ export class SessionStateService {
         this.checkAndTriggerConfetti();
       }
 
+      if (state.timerState) {
+        this.timerDuration.set(state.timerState.duration);
+        this.timerRemainingTime.set(state.timerState.remainingTime);
+        this.timerStatus.set(state.timerState.status);
+      }
+
       console.log('State sync complete', {
         votes: Object.keys(state.votes).length,
         participants: state.participants.length,
         revealed: state.votesRevealed,
-        hasDescription: !!state.description
+        hasDescription: !!state.description,
+        hasTimer: !!state.timerState
       });
     } catch (error) {
       console.error('Failed to parse state sync message', error);
@@ -323,6 +351,8 @@ export class SessionStateService {
     this.votesRevealed.set(false);
     this.confettiShot.set(false);
     this.resetSelectedValue();
+    this.timerStatus.set('idle');
+    this.timerRemainingTime.set(0);
   }
 
   private checkAndTriggerConfetti(): void {
@@ -374,5 +404,56 @@ export class SessionStateService {
   updateDescription(value: string): void {
     this.description.set(value);
     this.messageSender?.send(value, 'description');
+  }
+
+  private handleStartTimer(message: Message): void {
+    const duration = typeof message.content === 'number' ? message.content : 60;
+    this.timerDuration.set(duration);
+    this.timerRemainingTime.set(duration);
+    this.timerStatus.set('running');
+  }
+
+  private handlePauseTimer(): void {
+    this.timerStatus.set('paused');
+  }
+
+  private handleResumeTimer(): void {
+    this.timerStatus.set('running');
+  }
+
+  private handleStopTimer(): void {
+    this.timerStatus.set('idle');
+    this.timerRemainingTime.set(0);
+  }
+
+  private handleExtendTimer(message: Message): void {
+    const additionalSeconds = typeof message.content === 'number' ? message.content : 30;
+    this.timerDuration.update(d => d + additionalSeconds);
+    this.timerRemainingTime.update(r => r + additionalSeconds);
+  }
+
+  private handleTimerTick(message: Message): void {
+    const remainingTime = typeof message.content === 'number' ? message.content : 0;
+    this.timerRemainingTime.set(remainingTime);
+  }
+
+  startTimer(duration: number): void {
+    this.messageSender?.send(duration, MESSAGE_TYPES.START_TIMER);
+  }
+
+  pauseTimer(): void {
+    this.messageSender?.send('', MESSAGE_TYPES.PAUSE_TIMER);
+  }
+
+  resumeTimer(): void {
+    this.messageSender?.send('', MESSAGE_TYPES.RESUME_TIMER);
+  }
+
+  stopTimer(): void {
+    this.messageSender?.send('', MESSAGE_TYPES.STOP_TIMER);
+  }
+
+  extendTimer(additionalSeconds: number): void {
+    this.messageSender?.send(additionalSeconds, MESSAGE_TYPES.EXTEND_TIMER);
   }
 }

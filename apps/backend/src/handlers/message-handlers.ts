@@ -5,6 +5,13 @@ import { broadcastMessage } from '../utils/broadcast';
 import { handleHeartbeat, handleUserLeft } from './connection-handlers';
 import { handlePoints, handleShowVotes, handleClearVotes } from './state-handlers';
 import { handleRequestState } from './state-sync-handler';
+import {
+  handleStartTimer,
+  handlePauseTimer,
+  handleResumeTimer,
+  handleStopTimer,
+  handleExtendTimer
+} from './timer-handlers';
 
 /**
  * Handler function type
@@ -41,6 +48,11 @@ const EXCEPTION_HANDLERS: Partial<Record<string, MessageHandler>> = {
   [MESSAGE_TYPES.SHOW_VOTES]: handleShowVotes,
   [MESSAGE_TYPES.CLEAR_VOTES]: handleClearVotes,
   [MESSAGE_TYPES.REQUEST_STATE]: handleRequestState,
+  [MESSAGE_TYPES.START_TIMER]: handleStartTimer,
+  [MESSAGE_TYPES.PAUSE_TIMER]: handlePauseTimer,
+  [MESSAGE_TYPES.RESUME_TIMER]: handleResumeTimer,
+  [MESSAGE_TYPES.STOP_TIMER]: handleStopTimer,
+  [MESSAGE_TYPES.EXTEND_TIMER]: handleExtendTimer,
 };
 
 /**
