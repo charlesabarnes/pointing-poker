@@ -1,0 +1,28 @@
+@if (timerStatus() !== 'idle') {
+  <div class="timer-display" [class.paused]="timerStatus() === 'paused'">
+    <div class="timer-circle">
+      <svg viewBox="0 0 120 120" class="timer-svg">
+        <circle
+          cx="60"
+          cy="60"
+          r="54"
+          class="timer-bg"
+        />
+        <circle
+          cx="60"
+          cy="60"
+          r="54"
+          class="timer-progress"
+          [style.stroke-dasharray]="circumference"
+          [style.stroke-dashoffset]="progressOffset()"
+        />
+      </svg>
+      <div class="timer-text">
+        <div class="time">{{ formattedTime() }}</div>
+        @if (timerStatus() === 'paused') {
+          <div class="status">PAUSED</div>
+        }
+      </div>
+    </div>
+  </div>
+}
