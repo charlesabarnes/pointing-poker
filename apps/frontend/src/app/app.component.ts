@@ -91,7 +91,11 @@ export class AppComponent implements OnInit {
       if (this.pendingSessionId) {
         const sessionId = this.pendingSessionId;
         this.pendingSessionId = null;
-        setTimeout(() => { this.router.navigate([`/session/${sessionId}`]); }, 500);
+        setTimeout(() => {
+          this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+            this.router.navigate([`/session/${sessionId}`]);
+          });
+        }, 500);
       } else if (this.router.url === '/') {
         setTimeout(() => { this.router.navigate([`/session/${this.generateSessionId(30)}`]); }, 500);
       } else {
