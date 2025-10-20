@@ -14,19 +14,14 @@ export class UserActivityService implements OnDestroy {
   private activitySubject = new Subject<number>();
   private activityListeners: (() => void)[] = [];
 
-  // Observable stream of activity timestamps
   public activity$: Observable<number> = this.activitySubject.asObservable();
 
-  // Thresholds (in milliseconds)
-  private readonly AFK_THRESHOLD = 120000; // 2 minutes for AFK
+  private readonly AFK_THRESHOLD = 120000; 
 
   constructor() {
     this.setupActivityListeners();
   }
 
-  /**
-   * Setup all activity event listeners
-   */
   private setupActivityListeners(): void {
     if (typeof window === 'undefined') return;
 
@@ -88,45 +83,30 @@ export class UserActivityService implements OnDestroy {
     );
   }
 
-  /**
-   * Get the last activity timestamp
-   */
+
   public getLastActivityTime(): number {
     return this._lastActivityTime;
   }
 
-  /**
-   * Check if user is currently active (not AFK)
-   */
   public isActive(): boolean {
     const timeSinceActivity = Date.now() - this._lastActivityTime;
     return timeSinceActivity < this.AFK_THRESHOLD;
   }
 
-  /**
-   * Get time since last activity in milliseconds
-   */
   public getTimeSinceActivity(): number {
     return Date.now() - this._lastActivityTime;
   }
 
-  /**
-   * Determine user status based on activity
-   */
+
   public getUserStatus(): 'online' | 'afk' {
     return this.isActive() ? 'online' : 'afk';
   }
 
-  /**
-   * Check if page is currently visible
-   */
   public isPageVisible(): boolean {
     return typeof document !== 'undefined' && !document.hidden;
   }
 
-  /**
-   * Manually mark user as active (useful for testing or special cases)
-   */
+
   public markActive(): void {
     this._lastActivityTime = Date.now();
     this._isActive = true;
@@ -134,7 +114,7 @@ export class UserActivityService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Clean up all event listeners
+    // Clean up all  listeners
     this.activityListeners.forEach(cleanup => cleanup());
     this.activityListeners = [];
     this.activitySubject.complete();

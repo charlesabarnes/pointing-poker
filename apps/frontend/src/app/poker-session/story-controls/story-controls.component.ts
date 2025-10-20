@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, effect, inject, DestroyRef, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -24,7 +24,8 @@ import { TimerControlsComponent } from '../timer-controls/timer-controls.compone
     TimerControlsComponent
   ],
   templateUrl: './story-controls.component.html',
-  styleUrls: ['./story-controls.component.scss']
+  styleUrls: ['./story-controls.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StoryControlsComponent implements OnInit {
   faStickyNote = faStickyNote;
@@ -34,12 +35,14 @@ export class StoryControlsComponent implements OnInit {
   public form: FormGroup;
   public stateService = inject(SessionStateService);
   private destroyRef = inject(DestroyRef);
+  private cdr = inject(ChangeDetectorRef);
 
   constructor() {
     effect(() => {
       const description = this.stateService.description();
       if (description !== this.form?.value?.storyDescription) {
         this.form?.setValue({ storyDescription: description }, { emitEvent: false });
+        this.cdr.markForCheck();
       }
     });
   }
