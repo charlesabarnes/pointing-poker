@@ -1,0 +1,39 @@
+@use 'variables' as *;
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: default;
+}
+
+.status-text {
+  font-weight: 500;
+}
+
+.status-connected {
+  color: $color-status-online;
+}
+
+.status-connecting {
+  color: $color-primary;
+}
+
+.status-reconnecting {
+  color: $color-status-away;
+}
+
+.status-error {
+  color: $color-danger;
+}
+
+.status-disconnected {
+  color: $color-status-offline;
+}
+
+fa-icon {
+  font-size: 10px;
+}

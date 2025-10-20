@@ -41,6 +41,19 @@ yarn-error.log
 testem.log
 /typings
 
+# Environment variables
+.env
+
 # System Files
 .DS_Store
 Thumbs.db
+
+.angular
+**/.claude/settings.local.json
+.nx/cache
+.nx/workspace-data
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/

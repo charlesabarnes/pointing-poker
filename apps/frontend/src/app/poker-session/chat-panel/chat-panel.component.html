@@ -1,0 +1,75 @@
+<mat-card class="chat-card">
+  <mat-card-header>
+    <mat-card-title id="chat-title">
+      <fa-icon [icon]="faComments" aria-hidden="true"></fa-icon>
+      Team Chat
+    </mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="chat">
+      <!-- Chat log with live region for new messages -->
+      <div #scroller
+           class="chat-box"
+           role="log"
+           aria-live="polite"
+           aria-atomic="false"
+           aria-labelledby="chat-title"
+           aria-label="Chat messages">
+        @for (chat of stateService.chatLog(); track chat.timestamp) {
+          <div [ngClass]="{
+                 'chat-row': chat.type === 'chat',
+                 'system-message': chat.type === 'join'
+               }"
+               role="article">
+            @if (chat.type === 'chat') {
+              <span class="name" aria-label="Message from">{{ chat.sender }}</span>
+              <span class="text">{{ chat.content }}</span>
+              <time class="timestamp"
+                    [attr.datetime]="chat.timestamp"
+                    [title]="chat.timestamp | date:'medium'"
+                    [attr.aria-label]="'Sent at ' + (chat.timestamp | date:'shortTime')">
+                {{ chat.timestamp | date:'shortTime' }}
+              </time>
+            }
+            @if (chat.type === 'join') {
+              <fa-icon [icon]="faUserPlus" aria-hidden="true"></fa-icon>
+              <span class="system-text">{{ chat.sender }} {{ chat.content }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Chat input form -->
+      <div class="chat-input">
+        @if (chatForm) {
+          <form [formGroup]="chatForm"
+                (ngSubmit)="sendChat()"
+                autocomplete="off"
+                role="form"
+                aria-label="Send chat message">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Send Message</mat-label>
+              <input matInput
+                     formControlName="message"
+                     placeholder="Send Message"
+                     aria-label="Type your message"
+                     id="chat-input">
+            </mat-form-field>
+          </form>
+        }
+        <button mat-raised-button
+                color="primary"
+                (click)="sendChat()"
+                [disabled]="!chatForm.valid"
+                class="send-button"
+                type="submit"
+                aria-label="Send message"
+                [attr.aria-disabled]="!chatForm.valid">
+          <fa-icon [icon]="faPaperPlane" aria-hidden="true"></fa-icon>
+          Send
+        </button>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

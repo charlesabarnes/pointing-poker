@@ -1,0 +1,104 @@
+// Material Component Overrides
+// Custom styling for Angular Material components to match design system
+
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// Mixin to apply all Material component overrides
+// Call this after theme setup to avoid @use ordering issues
+@mixin apply-overrides {
+  // ============================================================================
+  // CARD COMPONENTS
+  // ============================================================================
+
+  // Global card styling - applies to all mat-card instances
+  .mat-mdc-card {
+    mat-card-header {
+      @include card-header;
+    }
+
+    mat-card-title {
+      @include card-title;
+    }
+
+    mat-card-content {
+      @include card-content;
+    }
+
+    mat-card-footer {
+      @include card-footer;
+    }
+  }
+
+  // ============================================================================
+  // TOOLBAR / APPBAR
+  // ============================================================================
+
+  .mat-toolbar {
+    &.mat-primary {
+      background-color: $color-primary;
+      color: white;
+
+      button,
+      .mat-icon-button {
+        color: white;
+      }
+    }
+  }
+
+  // ============================================================================
+  // BUTTONS
+  // ============================================================================
+
+  .mat-mdc-raised-button,
+  .mat-mdc-button {
+    border-radius: $border-radius-md;
+    font-weight: $font-weight-semibold;
+    letter-spacing: 0.5px;
+    text-transform: none;
+
+    // Better sizing
+    padding: $spacing-md $spacing-xl;
+    min-height: 40px;
+
+    // Icon spacing
+    fa-icon {
+      margin-right: $spacing-sm;
+    }
+  }
+
+  .mat-mdc-icon-button {
+    border-radius: $border-radius-md;
+  }
+
+  // ============================================================================
+  // FORM FIELDS
+  // ============================================================================
+
+  .mat-mdc-form-field {
+    // Use design system border radius
+    .mat-mdc-text-field-wrapper {
+      border-radius: $border-radius-md;
+    }
+  }
+}
+
+
+
+// ============================================================================
+// MATERIAL 3 CSS CUSTOM PROPERTIES
+// ============================================================================
+
+// Apply Material 3 component shape tokens globally
+// These override the default Material 3 values to match our design system
+:root {
+  // Button shapes - use consistent border-radius across all button types
+  --mdc-text-button-container-shape: #{$border-radius-md};
+  --mdc-protected-button-container-shape: #{$border-radius-md};
+  --mdc-filled-button-container-shape: #{$border-radius-md};
+  --mdc-outlined-button-container-shape: #{$border-radius-md};
+  --mdc-icon-button-state-layer-shape: #{$border-radius-md};
+
+  // Form field shapes
+  --mdc-outlined-text-field-container-shape: #{$border-radius-md};
+}

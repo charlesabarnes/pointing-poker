@@ -1,0 +1,106 @@
+<mat-card class="participants-card">
+  <mat-card-header>
+    <mat-card-title id="participants-title">
+      <fa-icon [icon]="faUser" aria-hidden="true"></fa-icon>
+      Participants
+    </mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <!-- User join notification with aria-live for screen readers -->
+    @if (stateService.newUserJoined()) {
+      <div class="user-joined-notification"
+           role="status"
+           aria-live="polite">
+        <fa-icon [icon]="faUserPlus" aria-hidden="true"></fa-icon>
+        <span>{{ stateService.recentJoinedUser() }} has joined the session</span>
+      </div>
+    }
+
+    <!-- Participants table with proper semantics -->
+    <div class="point-list" role="table" aria-labelledby="participants-title">
+      <!-- Table header -->
+      <div class="user-info user-info-header" role="row">
+        <div class="player-name" role="columnheader">
+          <h3>Player</h3>
+        </div>
+        <div class="status-indicator" role="columnheader">
+          <h3>Status</h3>
+        </div>
+        <div class="point-value" role="columnheader">
+          <h3>Points</h3>
+        </div>
+      </div>
+
+      <!-- Table rows -->
+      @for (user of stateService.users(); track user.fingerprint) {
+        @if (stateService.pointValues()[user.fingerprint] !== 'disconnect') {
+          <div class="user-info"
+               role="row"
+               [attr.aria-current]="stateService.isCurrentUser(user.fingerprint) ? 'true' : null"
+               [ngClass]="{'current-user': stateService.isCurrentUser(user.fingerprint)}">
+            <div class="player-name" role="cell">
+              <span>{{user.displayName}}</span>
+              @if (stateService.isCurrentUser(user.fingerprint)) {
+                <fa-icon [icon]="faUserCircle"
+                         aria-label="Current user"
+                         title="You">
+                </fa-icon>
+              }
+              @if (stateService.isCurrentUser(user.fingerprint)) {
+                <span class="sr-only">(You)</span>
+              }
+            </div>
+            <div class="status-indicator" role="cell">
+              <span class="status-dot"
+                [ngClass]="{
+                  'status-online': stateService.userActivity()[user.fingerprint]?.status === 'online',
+                  'status-afk': stateService.userActivity()[user.fingerprint]?.status === 'afk',
+                  'status-offline': stateService.userActivity()[user.fingerprint]?.status === 'offline' || !stateService.userActivity()[user.fingerprint]
+                }"
+                role="img"
+                [attr.aria-label]="(stateService.userActivity()[user.fingerprint]?.status || 'offline') + ' status indicator'">
+              </span>
+              <span class="status-text">{{ stateService.userActivity()[user.fingerprint]?.status || 'offline' }}</span>
+            </div>
+            <div class="point-value" role="cell">
+              @if (stateService.showValues()) {
+                <span class="vote-value"
+                      [attr.aria-label]="'Vote: ' + stateService.pointValues()[user.fingerprint]">
+                  {{stateService.pointValues()[user.fingerprint]}}
+                </span>
+              }
+              @if (!stateService.showValues()) {
+                <div class="vote-status">
+                  <fa-icon
+                    [icon]="stateService.pointValues()[user.fingerprint] ? faCheckCircle : faCircle"
+                    [ngClass]="{
+                      'has-voted': stateService.pointValues()[user.fingerprint],
+                      'no-vote': !stateService.pointValues()[user.fingerprint]
+                    }"
+                    aria-hidden="true">
+                  </fa-icon>
+                  <span>{{ stateService.pointValues()[user.fingerprint] ? 'Voted' : 'Not voted' }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </mat-card-content>
+
+  <mat-card-footer class="card-footer">
+    <div class="help-text" role="note">
+      <fa-icon [icon]="faQuestionCircle" aria-hidden="true"></fa-icon>
+      <span>If you experience issues, refresh the browser or
+        <a href="https://github.com/charlesabarnes/pointing-poker"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Report issues on GitHub (opens in new tab)">
+          report it on GitHub (charlesabarnes/pointing-poker).
+        </a>
+      </span>
+    </div>
+  </mat-card-footer>
+</mat-card>

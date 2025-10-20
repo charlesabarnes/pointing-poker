@@ -1,0 +1,35 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.chart-container {
+  @include full-width;
+  @include flex-center;
+  min-height: 400px;
+  max-height: 400px;
+
+  canvas {
+    max-width: 350px;
+    max-height: 350px;
+  }
+}
+
+.waiting-for-votes {
+  text-align: center;
+  color: $color-text-secondary;
+}
+
+.waiting-for-votes fa-icon {
+  font-size: $font-size-2xl;
+  margin-bottom: $spacing-lg;
+  @include pulse;
+}
+
+.waiting-for-votes h3 {
+  margin: $spacing-lg 0 $spacing-sm 0;
+  font-size: $font-size-lg;
+}
+
+.waiting-for-votes p {
+  margin: 0;
+  font-size: $font-size-base;
+}

@@ -1,0 +1,68 @@
+// Toast notification styles
+@use '@angular/material' as mat;
+@use 'variables' as *;
+
+// Toast color palette
+$toast-success: #4caf50;
+$toast-error: #f44336;
+$toast-warning: #ff9800;
+$toast-info: #2196f3;
+
+// Base toast styles
+.mat-mdc-snack-bar-container {
+  &.toast-success {
+    --mdc-snackbar-container-color: #{$toast-success};
+    --mat-snack-bar-button-color: #ffffff;
+
+    .mdc-snackbar__surface {
+      background-color: $toast-success;
+    }
+
+    .mat-mdc-snack-bar-label,
+    .mat-mdc-button {
+      color: #ffffff !important;
+    }
+  }
+
+  &.toast-error {
+    --mdc-snackbar-container-color: #{$toast-error};
+    --mat-snack-bar-button-color: #ffffff;
+
+    .mdc-snackbar__surface {
+      background-color: $toast-error;
+    }
+
+    .mat-mdc-snack-bar-label,
+    .mat-mdc-button {
+      color: #ffffff !important;
+    }
+  }
+
+  &.toast-warning {
+    --mdc-snackbar-container-color: #{$toast-warning};
+    --mat-snack-bar-button-color: #ffffff;
+
+    .mdc-snackbar__surface {
+      background-color: $toast-warning;
+    }
+
+    .mat-mdc-snack-bar-label,
+    .mat-mdc-button {
+      color: #ffffff !important;
+    }
+  }
+
+  &.toast-info {
+    --mdc-snackbar-container-color: #{$toast-info};
+    --mat-snack-bar-button-color: #ffffff;
+
+    .mdc-snackbar__surface {
+      background-color: $toast-info;
+    }
+
+    .mat-mdc-snack-bar-label,
+    .mat-mdc-button {
+      color: #ffffff !important;
+    }
+  }
+}

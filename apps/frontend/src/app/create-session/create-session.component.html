@@ -1,0 +1,38 @@
+<div class="onboarding-modal">
+  <h2 mat-dialog-title>Get started with your session</h2>
+  <mat-dialog-content>
+    <div class="modal-content">
+      <p class="intro-text">Enter your name to join or create a planning poker session. Your name will be visible to all participants.</p>
+
+      @if (form) {
+        <form [formGroup]="form" (ngSubmit)="save()">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" placeholder="Please Enter Name" required>
+            @if (form.get('name').hasError('required')) {
+              <mat-error>
+                Name is required
+              </mat-error>
+            }
+          </mat-form-field>
+        </form>
+      }
+
+      <div class="tips">
+        <h4><fa-icon [icon]="faInfoCircle"></fa-icon> Quick Tips:</h4>
+        <ul>
+          <li>Share the session link with your team to invite them</li>
+          <li>Use the story description field to describe what you're estimating</li>
+          <li>You can toggle between participant and spectator mode</li>
+        </ul>
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="close()" data-automation-id="create-modal-cancel">Cancel</button>
+    <button mat-raised-button color="primary" (click)="save()" data-automation-id="create-modal-save" [disabled]="!form.valid">
+      <fa-icon [icon]="faCheck"></fa-icon>
+      Continue
+    </button>
+  </mat-dialog-actions>
+</div>

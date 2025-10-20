@@ -1,0 +1,84 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.chat-card {
+  @include card-base;
+}
+
+.chat {
+  @include flex-column;
+  height: 400px;
+}
+
+.chat-box {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-lg;
+  background: $color-overlay-medium;
+  border-radius: $border-radius-lg;
+  margin-bottom: $spacing-lg;
+  @include flex-column;
+  gap: $spacing-md;
+  @include custom-scrollbar;
+}
+
+.chat-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background: $color-overlay-light;
+  border-radius: $border-radius-md;
+  align-items: start;
+}
+
+.chat-row .name {
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+  min-width: 100px;
+}
+
+.chat-row .text {
+  color: $color-text-primary;
+  word-break: break-word;
+}
+
+.chat-row .timestamp {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  white-space: nowrap;
+}
+
+.system-message {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm;
+  background: rgba($color-success, 0.1);
+  border-left: $border-width-lg solid $color-success;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-base;
+  color: $color-text-secondary;
+}
+
+.system-message fa-icon {
+  color: $color-success;
+}
+
+.chat-input {
+  display: flex;
+  gap: $spacing-md;
+  align-items: flex-start;
+}
+
+.chat-input form {
+  flex: 1;
+}
+
+.full-width {
+  @include full-width;
+}
+
+.send-button {
+  margin-top: $spacing-xs;
+}

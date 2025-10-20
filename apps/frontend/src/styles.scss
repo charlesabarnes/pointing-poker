@@ -1,0 +1,101 @@
+/* Global styles - Design system powered */
+@use '@angular/material' as mat;
+
+// Import design system
+@use 'variables' as *;
+@use 'mixins' as *;
+@use 'overrides' as overrides;
+@use 'toast' as *;
+
+// Include the common styles for Angular Material
+@include mat.core();
+
+// Define a light theme for the app with proper Material 3 configuration
+$custom-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+    tertiary: mat.$green-palette,
+  ),
+  typography: (
+    plain-family: $font-family-base,
+    brand-family: $font-family-base,
+    bold-weight: $font-weight-bold,
+    medium-weight: $font-weight-medium,
+    regular-weight: $font-weight-normal,
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+// Include theme styles for core and each component used in your app
+@include mat.all-component-themes($custom-theme);
+
+// ============================================================================
+// MATERIAL COMPONENT OVERRIDES
+// ============================================================================
+
+// Apply Material component customizations
+@include overrides.apply-overrides;
+
+// ============================================================================
+// BASE STYLES
+// ============================================================================
+
+body {
+  margin: 0;
+  font-family: $font-family-base;
+  background: $color-bg-light;
+  color: $color-text-primary;
+  min-height: 100vh;
+}
+
+// ============================================================================
+// ACCESSIBILITY - Skip Links
+// ============================================================================
+
+.skip-link {
+  @include skip-link;
+}
+
+// ============================================================================
+// UTILITY CLASSES
+// ============================================================================
+
+.full-width {
+  @include full-width;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.sr-only {
+  @include sr-only;
+}
+
+// ============================================================================
+// COMPONENT STYLES
+// ============================================================================
+
+// FontAwesome icon alignment
+fa-icon {
+  vertical-align: middle;
+}
+
+// ============================================================================
+// FOCUS MANAGEMENT
+// ============================================================================
+
+// Ensure all interactive elements have visible focus
+button,
+a,
+input,
+select,
+textarea,
+[tabindex]:not([tabindex="-1"]) {
+  &:focus-visible {
+    @include focus-outline;
+  }
+}

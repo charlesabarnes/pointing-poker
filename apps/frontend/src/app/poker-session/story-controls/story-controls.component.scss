@@ -1,0 +1,38 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.story-section {
+  margin-bottom: $spacing-xl;
+}
+
+.story-section h3 {
+  margin-bottom: $spacing-lg;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.full-width {
+  @include full-width;
+}
+
+.timer-section {
+  margin-bottom: $spacing-xl;
+  padding: $spacing-lg;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.action-buttons {
+  display: flex;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-xl;
+}
+
+.action-buttons button {
+  flex: 1;
+}

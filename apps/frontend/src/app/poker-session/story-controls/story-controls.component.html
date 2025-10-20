@@ -1,0 +1,39 @@
+<div class="story-section">
+  <h3 id="story-description-label">
+    <fa-icon [icon]="faStickyNote" aria-hidden="true"></fa-icon>
+    Story Description
+  </h3>
+  @if (form) {
+    <form [formGroup]="form" role="form" aria-labelledby="story-description-label">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Story Description</mat-label>
+        <input matInput
+               formControlName="storyDescription"
+               aria-label="Story Description"
+               aria-describedby="story-description-label">
+      </mat-form-field>
+    </form>
+  }
+</div>
+
+<div class="timer-section">
+  <app-timer-display />
+  <app-timer-controls />
+</div>
+
+<div class="action-buttons" role="group" aria-label="Voting Actions">
+  <button mat-raised-button
+          color="warn"
+          (click)="onClearVotes()"
+          aria-label="Clear all votes from current round">
+    <fa-icon [icon]="faTimes" aria-hidden="true"></fa-icon>
+    Clear Votes
+  </button>
+  <button mat-raised-button
+          color="primary"
+          (click)="onShowVotes()"
+          aria-label="Reveal all votes to participants">
+    <fa-icon [icon]="faEye" aria-hidden="true"></fa-icon>
+    Show Votes
+  </button>
+</div>

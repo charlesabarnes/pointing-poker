@@ -1,0 +1,8 @@
+<div class="connection-status" [matTooltip]="tooltipText()" matTooltipPosition="below">
+  @if (connectionState() === 'connecting' || connectionState() === 'reconnecting') {
+    <fa-icon [icon]="faSpinner" [spin]="true" [class]="statusClass()"></fa-icon>
+  } @else {
+    <fa-icon [icon]="faCircle" [class]="statusClass()"></fa-icon>
+  }
+  <span class="status-text">{{ statusText() }}</span>
+</div>

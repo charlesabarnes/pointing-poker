@@ -1,0 +1,48 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.point-value-container {
+  margin-bottom: $spacing-xl;
+}
+
+.point-value-container h3 {
+  margin-bottom: $spacing-lg;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.point-selection-grid {
+  justify-content: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-lg;
+
+  app-point-selection-button {
+    flex: 0 0 120px; // Fixed width for consistency while maintaining natural flow
+  }
+}
+
+.spectator-container {
+  margin-top: $spacing-2xl;
+}
+
+.spectator-toggle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-lg;
+  padding: $spacing-lg;
+  background: $color-overlay-medium;
+  border-radius: $border-radius-lg;
+}
+
+.spectator-toggle span {
+  color: $color-text-tertiary;
+  font-weight: $font-weight-medium;
+  @include transition(color, font-weight);
+}
+
+.spectator-toggle span.active {
+  color: $color-text-primary;
+  font-weight: $font-weight-semibold;
+}

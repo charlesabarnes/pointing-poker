@@ -1,0 +1,22 @@
+header-spacer {
+  width: 50px;
+}
+
+.app-header {
+  .app-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+  }
+
+  .name {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.9);
+    margin-left: 1.5rem;
+  }
+}
+
+.outlet-container {
+  height: calc(100vh - 55px);
+}

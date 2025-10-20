@@ -1,0 +1,25 @@
+<mat-toolbar color="primary" class="app-header">
+  <span class="app-title">Pointing Poker</span>
+  <span class="name">{{ name }}</span>
+  <span class="spacer"></span>
+  @if (showConnectionStatus) {
+    <app-connection-status></app-connection-status>
+  }
+  <button mat-icon-button
+          [cdkCopyToClipboard]="currentUrl"
+          (click)="copiedToClipboard()"
+          matTooltip="Copy Session Link"
+          matTooltipPosition="below"
+          data-testid="copy-session-url">
+    <fa-icon [icon]="faCopy"></fa-icon>
+  </button>
+  <button mat-icon-button
+          (click)="changeName()"
+          matTooltip="Change settings"
+          matTooltipPosition="below">
+    <fa-icon [icon]="faCog"></fa-icon>
+  </button>
+</mat-toolbar>
+<div class="outlet-container">
+  <router-outlet></router-outlet>
+</div>
