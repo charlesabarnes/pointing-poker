@@ -16,8 +16,8 @@
           backgroundColor: colors
         }]
       }"
-      [options]="chartOptions"
-      [type]="chartType"
+      [options]="chartOptions()"
+      [type]="chartType()"
       [plugins]="plugins"
       role="img"
       [attr.aria-label]="getChartAccessibleDescription()">

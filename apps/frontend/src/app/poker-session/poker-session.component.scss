@@ -14,6 +14,55 @@
     .main-session-card {
       @include card-base;
 
+      mat-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .chart-type-toggle {
+        display: flex;
+        gap: $spacing-xs;
+
+        button {
+          padding: $spacing-sm;
+          border: $border-width-sm solid $color-overlay-medium;
+          background: $color-bg-lighter;
+          border-radius: $border-radius-sm;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+
+          fa-icon {
+            font-size: $font-size-lg;
+            color: $color-text-secondary;
+          }
+
+          &:hover {
+            background: $color-overlay-light;
+            border-color: $color-primary;
+          }
+
+          &:focus-visible {
+            outline: 2px solid $color-primary;
+            outline-offset: 2px;
+          }
+
+          &.active {
+            background: $color-primary;
+            border-color: $color-primary;
+
+            fa-icon {
+              color: $color-bg-lighter;
+            }
+          }
+        }
+      }
+
       .main-content {
         @include grid-responsive(2, $spacing-2xl, $breakpoint-lg);
       }

@@ -7,6 +7,28 @@
     <mat-card class="main-session-card">
       <mat-card-header>
         <mat-card-title id="session-title">Planning Poker Session</mat-card-title>
+        @if (stateService.showChart()) {
+          <div class="chart-type-toggle" role="group" aria-label="Chart type selection">
+            <button type="button"
+                    [class.active]="chartType() === 'pie'"
+                    (click)="setChartType('pie')"
+                    aria-label="Pie chart">
+              <fa-icon [icon]="faChartPie"></fa-icon>
+            </button>
+            <button type="button"
+                    [class.active]="chartType() === 'bar'"
+                    (click)="setChartType('bar')"
+                    aria-label="Bar chart">
+              <fa-icon [icon]="faChartBar"></fa-icon>
+            </button>
+            <button type="button"
+                    [class.active]="chartType() === 'line'"
+                    (click)="setChartType('line')"
+                    aria-label="Line chart">
+              <fa-icon [icon]="faChartLine"></fa-icon>
+            </button>
+          </div>
+        }
       </mat-card-header>
 
       <mat-card-content id="main-content">
@@ -20,7 +42,7 @@
 
           <!-- Results visualization section -->
           <aside class="right-panel" aria-label="Voting Results">
-            <app-results-chart></app-results-chart>
+            <app-results-chart [chartType]="chartType()"></app-results-chart>
           </aside>
         </div>
       </mat-card-content>

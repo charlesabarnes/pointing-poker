@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartOptions, ChartType } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
@@ -23,38 +23,98 @@ export class ResultsChartComponent {
 
   public stateService = inject(SessionStateService);
 
-  public chartType: ChartType = 'pie';
+  public chartType = input.required<ChartType>();
   public plugins = [ChartDataLabels];
   public colors = ['#4A89DC', '#8CC152', '#DA4453', '#F6B042', '#2F384F', '#282828', '#662255', '#454EA0'];
 
-  public chartOptions: ChartOptions = {
-    responsive: true,
-    maintainAspectRatio: true,
-    aspectRatio: 1,
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: {
+  public chartOptions = computed<ChartOptions>(() => {
+    const type = this.chartType();
+
+    if (type === 'pie') {
+      return {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              color: '#212121',
+              font: {
+                size: 14
+              }
+            }
+          },
+          datalabels: {
+            display: true,
+            color: '#fff',
+            font: {
+              size: 18,
+              weight: 'bold',
+            },
+            formatter: (_value, ctx) => {
+              const label = ctx.chart.data.labels?.[ctx.dataIndex];
+              return label;
+            },
+          },
+        }
+      };
+    }
+
+    return {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 1.5,
+      plugins: {
+        legend: {
+          display: false
+        },
+        datalabels: {
+          display: true,
           color: '#212121',
+          anchor: 'end',
+          align: 'top',
           font: {
-            size: 14
+            size: 14,
+            weight: 'bold',
+          },
+          formatter: (value) => value,
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            color: '#212121'
+          },
+          title: {
+            display: true,
+            text: 'Number of Votes',
+            color: '#212121',
+            font: {
+              size: 14,
+              weight: 'bold'
+            }
+          }
+        },
+        x: {
+          ticks: {
+            color: '#212121'
+          },
+          title: {
+            display: true,
+            text: 'Point Value',
+            color: '#212121',
+            font: {
+              size: 14,
+              weight: 'bold'
+            }
           }
         }
-      },
-      datalabels: {
-        display: true,
-        color: '#fff',
-        font: {
-          size: 18,
-          weight: 'bold',
-        },
-        formatter: (_value, ctx) => {
-          const label = ctx.chart.data.labels[ctx.dataIndex];
-          return label;
-        },
-      },
-    }
-  };
+      }
+    };
+  });
 
   public chartData = computed(() => {
     const pointValueCounts = this.getPointValueCountObject();
